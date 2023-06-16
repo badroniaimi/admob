@@ -204,6 +204,10 @@ public class BannerExecutor extends Executor {
      */
     private void createNewAdView(AdOptions adOptions) {
         // Run AdMob In Main UI Thread
+        if(mAdView == null) {
+            Log.d(logTag, "AdView is null");
+            return;
+        }
         activitySupplier
             ?.get()
             ?.runOnUiThread(

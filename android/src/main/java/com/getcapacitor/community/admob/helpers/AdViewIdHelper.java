@@ -25,7 +25,10 @@ public final class AdViewIdHelper {
 
     public static void assignIdToAdView(AdView adView, AdOptions adOptions, AdRequest adRequest, String logTag, Context context) {
         String finalId = getFinalAdId(adOptions, adRequest, logTag, context);
-        adView.setAdUnitId(finalId);
+        if(adView != null)
+            adView.setAdUnitId(finalId);
+        else
+            Log.w(logTag, "AdView is null");
         Log.d(logTag, "Ad ID: " + finalId);
     }
 }
