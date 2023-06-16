@@ -41,7 +41,7 @@ public class BannerExecutor extends Executor {
     }
 
     public void initialize() {
-        mViewGroup = (ViewGroup) ((ViewGroup) activitySupplier.get().findViewById(android.R.id.content)).getChildAt(0);
+        mViewGroup = (ViewGroup) ((ViewGroup) activitySupplier?.get()?.findViewById(android.R.id.content))?.getChildAt(0);
     }
 
     public void showBanner(final PluginCall call) {
