@@ -189,8 +189,8 @@ public class BannerExecutor extends Executor {
 
     private void updateExistingAdView(AdOptions adOptions) {
         activitySupplier
-            ?.get()
-            ?.runOnUiThread(() -> {
+            .get()
+            .runOnUiThread(() -> {
                 if (adOptions != null && mAdView != null) {
                     final AdRequest adRequest = RequestHelper.createRequest(adOptions);
                     mAdView.loadAd(adRequest);
@@ -209,8 +209,8 @@ public class BannerExecutor extends Executor {
             return;
         }
         activitySupplier
-            ?.get()
-            ?.runOnUiThread(
+            .get()
+            .runOnUiThread(
                 () -> {
                     final AdRequest adRequest = RequestHelper.createRequest(adOptions);
                     // Assign the correct id needed
