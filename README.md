@@ -13,58 +13,20 @@
   <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/dw/@capacitor-community/admob?style=flat-square" /></a>
   <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/v/@capacitor-community/admob?style=flat-square" /></a>
 </p>
-## Bug Fix
 
-This repo was made in order to solve android java.lang.NullPointerException and java.lang.IllegalStateException that causes the mobile application to crash,
+## Maintainers
 
-Exception java.lang.NullPointerException:
-  at com.getcapacitor.community.admob.banner.BannerExecutor.lambda$updateExistingAdView$3 (BannerExecutor.java)
-  at android.os.Handler.handleCallback (Handler.java:942)
-  at android.os.Handler.dispatchMessage (Handler.java:99)
-  at android.os.Looper.loopOnce (Looper.java:211)
-  at android.os.Looper.loop (Looper.java:300)
-  at android.app.ActivityThread.main (ActivityThread.java:8410)
-  at java.lang.reflect.Method.invoke
-  at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run (RuntimeInit.java:559)
-  at com.android.internal.os.ZygoteInit.main (ZygoteInit.java:954)
+| Maintainer          | GitHub                              | Social                                | Sponsoring Company                             |
+| ------------------- | ----------------------------------- | ------------------------------------- | ---------------------------------------------- |
+| Masahiko Sakakibara | [rdlabo](https://github.com/rdlabo) | [@rdlabo](https://twitter.com/rdlabo) | RELATION DESIGN LABO, GENERAL INC. ASSOCIATION |
+| Saninn Salas Diaz | [Saninn Salas Diaz](https://github.com/distante) | [@SaninnSalas](https://twitter.com/SaninnSalas) | |
 
-Exception java.lang.NullPointerException:
-  at com.getcapacitor.community.admob.helpers.AdViewIdHelper.assignIdToAdView (AdViewIdHelper.java)
-  at com.getcapacitor.community.admob.banner.BannerExecutor.lambda$createNewAdView$4 (BannerExecutor.java)
-  at android.os.Handler.handleCallback (Handler.java:907)
-  at android.os.Handler.dispatchMessage (Handler.java:105)
-  at android.os.Looper.loop (Looper.java:216)
-  at android.app.ActivityThread.main (ActivityThread.java:7625)
-  at java.lang.reflect.Method.invoke
-  at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run (RuntimeInit.java:524)
-  at com.android.internal.os.ZygoteInit.main (ZygoteInit.java:987)
-  
-Exception java.lang.IllegalStateException: The ad size and ad unit ID must be set before loadAd is called.
-  at com.google.android.gms.ads.internal.client.zzea.zzm (zzea.java)
-  at com.google.android.gms.ads.BaseAdView.loadAd (BaseAdView.java)
-  at com.getcapacitor.community.admob.banner.BannerExecutor.lambda$updateExistingAdView$3 (BannerExecutor.java)
-  at android.os.Handler.handleCallback (Handler.java:942)
-  at android.os.Handler.dispatchMessage (Handler.java:99)
-  at android.os.Looper.loopOnce (Looper.java:226)
-  at android.os.Looper.loop (Looper.java:313)
-  at android.app.ActivityThread.main (ActivityThread.java:8741)
-  at java.lang.reflect.Method.invoke
-  at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run (RuntimeInit.java:571)
-  at com.android.internal.os.ZygoteInit.main (ZygoteInit.java:1067)
+Maintenance Status: Actively Maintained
 
-Exception : java.lang.NullPointerException	Attempt to invoke virtual method 'void n2.j.b(n2.f)' on a null object reference
-  at com.getcapacitor.community.admob.banner.BannerExecutor.lambda$updateExistingAdView$3 (BannerExecutor.java)
-  at android.os.Handler.handleCallback (Handler.java:938)
-  at android.os.Handler.dispatchMessage (Handler.java:99)
-  at android.os.Looper.loopOnce (Looper.java:233)
-  at android.os.Looper.loop (Looper.java:334)
-  at android.app.ActivityThread.main (ActivityThread.java:8396)
-  at java.lang.reflect.Method.invoke
-  at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run (RuntimeInit.java:582)
-  at com.android.internal.os.ZygoteInit.main (ZygoteInit.java:1068)
-
-
-
+## Contributors ✨
+<a href="https://github.com/capacitor-community/admob/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=capacitor-community/admob" />
+</a>
 
 Made with [contributors-img](https://contrib.rocks).
 
@@ -903,9 +865,7 @@ https://developers.google.com/admob/android/rewarded-video-adapters?hl=en
 
 From T, pick a set of properties whose keys are in the union K
 
-<code>{
- [P in K]: T[P];
- }</code>
+<code>{ [P in K]: T[P]; }</code>
 
 
 ### Enums

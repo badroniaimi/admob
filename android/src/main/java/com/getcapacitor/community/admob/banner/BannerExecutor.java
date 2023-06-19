@@ -49,11 +49,13 @@ public class BannerExecutor extends Executor {
         float widthPixels = (int) contextSupplier.get().getResources().getDisplayMetrics().widthPixels;
         float density = contextSupplier.get().getResources().getDisplayMetrics().density;
 
+        if (mAdView != null) {
+            updateExistingAdView(adOptions);
+            return;
+        }
+
+        // Why a try catch block?
         try {
-            if (mAdView != null) {
-                updateExistingAdView(adOptions);
-                return;
-            }
             mAdView = new AdView(contextSupplier.get());
 
             if (!adOptions.adSize.toString().equals("ADAPTIVE_BANNER")) {
@@ -111,11 +113,12 @@ public class BannerExecutor extends Executor {
     }
 
     public void hideBanner(final PluginCall call) {
+        if (mAdView == null) {
+            call.reject("You tried to hide a banner that was never shown");
+            return;
+        }
+
         try {
-            if (mAdView == null) {
-                call.reject("You tried to hide a banner that was never shown");
-                return;
-            }
             activitySupplier
                 .get()
                 .runOnUiThread(
@@ -190,12 +193,12 @@ public class BannerExecutor extends Executor {
     private void updateExistingAdView(AdOptions adOptions) {
         activitySupplier
             .get()
-            .runOnUiThread(() -> {
-                if (adOptions != null && mAdView != null) {
+            .runOnUiThread(
+                () -> {
                     final AdRequest adRequest = RequestHelper.createRequest(adOptions);
                     mAdView.loadAd(adRequest);
                 }
-            });
+            );
     }
 
     /**
@@ -204,10 +207,6 @@ public class BannerExecutor extends Executor {
      */
     private void createNewAdView(AdOptions adOptions) {
         // Run AdMob In Main UI Thread
-        if(mAdView == null) {
-            Log.d(logTag, "AdView is null");
-            return;
-        }
         activitySupplier
             .get()
             .runOnUiThread(
