@@ -1,6 +1,6 @@
 {
-  "name": "@capacitor-community/admob",
-  "version": "5.0.1",
+  "name": "@capacitor-badr/admob",
+  "version": "1.0.0",
   "description": "A native plugin for AdMob",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -17,10 +17,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:capacitor-community/admob.git"
+    "url": "git@github.com:badroniaimi/admob.git"
   },
   "bugs": {
-    "url": "git@github.com:capacitor-community/admob.git/issues"
+    "url": "git@github.com:badroniaimi/admob.git/issues"
   },
   "scripts": {
     "verify": "npm run verify:ios && npm run verify:android && npm run verify:web",

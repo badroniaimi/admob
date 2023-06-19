@@ -3,9 +3,23 @@ import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { PluginListenerHandle } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 
-import { AdMob, AdMobBannerSize, AdMobRewardItem, BannerAdOptions, BannerAdPluginEvents, BannerAdSize, InterstitialAdPluginEvents, RewardAdPluginEvents} from '@capacitor-community/admob';
+import {
+  AdMob,
+  AdMobBannerSize,
+  AdMobRewardItem,
+  BannerAdOptions,
+  BannerAdPluginEvents,
+  BannerAdSize,
+  InterstitialAdPluginEvents,
+  RewardAdPluginEvents,
+} from '@badroniaimi/admob';
 import { ReplaySubject } from 'rxjs';
-import { bannerTopOptions, bannerBottomOptions, rewardOptions, interstitialOptions } from '../shared/ad.options';
+import {
+  bannerTopOptions,
+  bannerBottomOptions,
+  rewardOptions,
+  interstitialOptions,
+} from '../shared/ad.options';
 
 @Component({
   selector: 'app-home',
@@ -13,17 +27,29 @@ import { bannerTopOptions, bannerBottomOptions, rewardOptions, interstitialOptio
   styleUrls: ['home.page.scss'],
 })
 export class HomePage implements ViewWillEnter, ViewWillLeave {
-  public readonly bannerSizes: BannerAdSize[] = Object.keys(BannerAdSize) as BannerAdSize[];
+  public readonly bannerSizes: BannerAdSize[] = Object.keys(
+    BannerAdSize,
+  ) as BannerAdSize[];
   public currentBannerSize?: BannerAdSize;
 
-  private readonly lastBannerEvent$$ = new ReplaySubject<{name: string, value: any}>(1);
-  public readonly lastBannerEvent$ = this.lastBannerEvent$$.asObservable()
+  private readonly lastBannerEvent$$ = new ReplaySubject<{
+    name: string;
+    value: any;
+  }>(1);
+  public readonly lastBannerEvent$ = this.lastBannerEvent$$.asObservable();
 
-  private readonly lastRewardEvent$$ = new ReplaySubject<{name: string, value: any}>(1);
-  public readonly lastRewardEvent$ = this.lastRewardEvent$$.asObservable()
+  private readonly lastRewardEvent$$ = new ReplaySubject<{
+    name: string;
+    value: any;
+  }>(1);
+  public readonly lastRewardEvent$ = this.lastRewardEvent$$.asObservable();
 
-  private readonly lastInterstitialEvent$$ = new ReplaySubject<{name: string, value: any}>(1);
-  public readonly lastInterstitialEvent$ = this.lastInterstitialEvent$$.asObservable()
+  private readonly lastInterstitialEvent$$ = new ReplaySubject<{
+    name: string;
+    value: any;
+  }>(1);
+  public readonly lastInterstitialEvent$ =
+    this.lastInterstitialEvent$$.asObservable();
 
   private readonly listenerHandlers: PluginListenerHandle[] = [];
   /**
@@ -43,44 +69,46 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
 
   constructor(
     private readonly toastCtrl: ToastController,
-    private readonly ngZone: NgZone
-  ) {
-  }
+    private readonly ngZone: NgZone,
+  ) {}
 
   ionViewWillEnter() {
     /**
      * Run every time the Ad height changes.
      * AdMob cannot be displayed above the content, so create margin for AdMob.
      */
-    const resizeHandler = AdMob.addListener(BannerAdPluginEvents.SizeChanged, (info: AdMobBannerSize) => {
-      this.appMargin = info.height;
-      const app: HTMLElement = document.querySelector('ion-router-outlet');
+    const resizeHandler = AdMob.addListener(
+      BannerAdPluginEvents.SizeChanged,
+      (info: AdMobBannerSize) => {
+        this.appMargin = info.height;
+        const app: HTMLElement = document.querySelector('ion-router-outlet');
 
-      if (this.appMargin === 0) {
-        app.style.marginTop = '';
-        return;
-      }
-
-      if (this.appMargin > 0) {
-        const body = document.querySelector('body');
-        const bodyStyles = window.getComputedStyle(body);
-        const safeAreaBottom = bodyStyles.getPropertyValue("--ion-safe-area-bottom");
-
-        
-        if (this.bannerPosition === 'top') {
-          app.style.marginTop = this.appMargin + 'px';
-        } else {
-          app.style.marginBottom = `calc(${safeAreaBottom} + ${this.appMargin}px)`;
+        if (this.appMargin === 0) {
+          app.style.marginTop = '';
+          return;
         }
-      }
-    });
+
+        if (this.appMargin > 0) {
+          const body = document.querySelector('body');
+          const bodyStyles = window.getComputedStyle(body);
+          const safeAreaBottom = bodyStyles.getPropertyValue(
+            '--ion-safe-area-bottom',
+          );
+
+          if (this.bannerPosition === 'top') {
+            app.style.marginTop = this.appMargin + 'px';
+          } else {
+            app.style.marginBottom = `calc(${safeAreaBottom} + ${this.appMargin}px)`;
+          }
+        }
+      },
+    );
 
     this.listenerHandlers.push(resizeHandler);
 
     this.registerRewardListeners();
     this.registerBannerListeners();
     this.registerInterstitialListeners();
-
   }
 
   ionViewWillLeave() {
@@ -101,12 +129,16 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
   }
 
   private async showBanner(options: BannerAdOptions): Promise<void> {
-    const bannerOptions: BannerAdOptions = { ...options, adSize: this.currentBannerSize };
+    const bannerOptions: BannerAdOptions = {
+      ...options,
+      adSize: this.currentBannerSize,
+    };
     console.log('Requesting banner with this options', bannerOptions);
 
-    const result = await AdMob.showBanner(bannerOptions).
-      catch(e => console.error(e));
-    
+    const result = await AdMob.showBanner(bannerOptions).catch(e =>
+      console.error(e),
+    );
+
     if (result === undefined) {
       return;
     }
@@ -114,11 +146,8 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
     this.isPrepareBanner = true;
   }
 
-
-
   async hideBanner() {
-    const result = await AdMob.hideBanner()
-      .catch(e => console.log(e));
+    const result = await AdMob.hideBanner().catch(e => console.log(e));
     if (result === undefined) {
       return;
     }
@@ -129,8 +158,7 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
   }
 
   async resumeBanner() {
-    const result = await AdMob.resumeBanner()
-      .catch(e => console.log(e));
+    const result = await AdMob.resumeBanner().catch(e => console.log(e));
     if (result === undefined) {
       return;
     }
@@ -140,8 +168,7 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
   }
 
   async removeBanner() {
-    const result = await AdMob.removeBanner()
-      .catch(e => console.log(e));
+    const result = await AdMob.removeBanner().catch(e => console.log(e));
     if (result === undefined) {
       return;
     }
@@ -154,7 +181,6 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
   /**
    * ==================== /BANNER ====================
    */
-
 
   /**
    * ==================== REWARD ====================
@@ -172,8 +198,9 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
   }
 
   async showReward() {
-    const result: AdMobRewardItem = await AdMob.showRewardVideoAd()
-      .catch(e => undefined);
+    const result: AdMobRewardItem = await AdMob.showRewardVideoAd().catch(
+      e => undefined,
+    );
     if (result === undefined) {
       return;
     }
@@ -191,15 +218,16 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
 
     eventKeys.forEach(key => {
       console.log(`registering ${InterstitialAdPluginEvents[key]}`);
-      const handler = AdMob.addListener(InterstitialAdPluginEvents[key], (value) => {
-        console.log(`Interstitial Event "${key}"`, value);
+      const handler = AdMob.addListener(
+        InterstitialAdPluginEvents[key],
+        value => {
+          console.log(`Interstitial Event "${key}"`, value);
 
-        this.ngZone.run(() => {
-          this.lastInterstitialEvent$$.next({name: key, value: value});
-        })
-
-
-      });
+          this.ngZone.run(() => {
+            this.lastInterstitialEvent$$.next({ name: key, value: value });
+          });
+        },
+      );
       this.listenerHandlers.push(handler);
     });
   }
@@ -209,14 +237,12 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
 
     eventKeys.forEach(key => {
       console.log(`registering ${RewardAdPluginEvents[key]}`);
-      const handler = AdMob.addListener(RewardAdPluginEvents[key], (value) => {
+      const handler = AdMob.addListener(RewardAdPluginEvents[key], value => {
         console.log(`Reward Event "${key}"`, value);
 
         this.ngZone.run(() => {
-          this.lastRewardEvent$$.next({name: key, value: value});
-        })
-
-
+          this.lastRewardEvent$$.next({ name: key, value: value });
+        });
       });
       this.listenerHandlers.push(handler);
     });
@@ -227,16 +253,14 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
 
     eventKeys.forEach(key => {
       console.log(`registering ${BannerAdPluginEvents[key]}`);
-      const handler = AdMob.addListener(BannerAdPluginEvents[key], (value) => {
+      const handler = AdMob.addListener(BannerAdPluginEvents[key], value => {
         console.log(`Banner Event "${key}"`, value);
 
         this.ngZone.run(() => {
-          this.lastBannerEvent$$.next({name: key, value: value});
-        })
-
+          this.lastBannerEvent$$.next({ name: key, value: value });
+        });
       });
       this.listenerHandlers.push(handler);
-
     });
   }
 
@@ -254,7 +278,6 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
       const result = await AdMob.prepareInterstitial(interstitialOptions);
       console.log('Interstitial Prepared', result);
       this.isPrepareInterstitial = true;
-      
     } catch (e) {
       console.error('There was a problem preparing the Interstitial', e);
     } finally {
@@ -262,10 +285,8 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
     }
   }
 
-
   async showInterstitial() {
-   await AdMob.showInterstitial()
-      .catch(e => console.log(e));
+    await AdMob.showInterstitial().catch(e => console.log(e));
 
     this.isPrepareInterstitial = false;
   }

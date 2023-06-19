@@ -1,6 +1,6 @@
 [
 	{
-		"pkg": "@capacitor-community/admob",
+		"pkg": "@badroniaimi/admob",
 		"classpath": "com.getcapacitor.community.admob.AdMob"
 	}
 ]

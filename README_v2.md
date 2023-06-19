@@ -6,7 +6,7 @@
 # ✅ Please check
 This is development README for Capacitor v1-2. If you use v3 please check [README.md](README.md)
 
-# @capacitor-community/admob
+# @badroniaimi/admob
 
 Capacitory community plugin for AdMob.
 
@@ -20,7 +20,7 @@ Maintenance Status: Actively Maintained
 
 ## Demo
 
-[Demo code is here.](https://github.com/capacitor-community/admob/tree/master/demo)
+[Demo code is here.](https://github.com/badroniaimi/admob/tree/master/demo)
 
 ### Screenshots
 
@@ -34,7 +34,7 @@ Maintenance Status: Actively Maintained
 **Supporting iOS14 is be since @1.1.0.**
 
 ```
-% npm install --save @capacitor-community/admob@^1.0.0
+% npm install --save @badroniaimi/admob@^1.0.0
 % npx cap update
 ```
 
@@ -136,7 +136,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
 
 import { Plugins } from '@capacitor/core';
-import { AdOptions, AdSize, AdPosition } from '@capacitor-community/admob';
+import { AdOptions, AdSize, AdPosition } from '@badroniaimi/admob';
 const { AdMob } = Plugins;
 
 const App: React.FC = () => {
@@ -193,7 +193,7 @@ export default App;
 
 ```ts
 import { Plugins } from '@capacitor/core';
-import { AdOptions, AdSize, AdPosition } from '@capacitor-community/admob';
+import { AdOptions, AdSize, AdPosition } from '@badroniaimi/admob';
 const { AdMob } = Plugins;
 
 @Component({
@@ -267,7 +267,7 @@ addListener(eventName: 'onAdSize', listenerFunc: (info: any) => void): PluginLis
 
 ```ts
 import { Plugins } from '@capacitor/core';
-import { AdOptions } from '@capacitor-community/admob';
+import { AdOptions } from '@badroniaimi/admob';
 const { AdMob } = Plugins;
 
 @Component({
@@ -318,7 +318,7 @@ addListener(eventName: 'onInterstitialAdLeftApplication', listenerFunc: (info: a
 
 ```ts
 import { Plugins } from '@capacitor/core';
-import { AdOptions } from '@capacitor-community/admob';
+import { AdOptions } from '@badroniaimi/admob';
 const { AdMob } = Plugins;
 
 @Component({
@@ -446,10 +446,10 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://wako.app"><img src="https://avatars1.githubusercontent.com/u/216573?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jean-Baptiste Malatrasi</b></sub></a><br /><a href="https://github.com/capacitor-community/admob/commits?author=JumBay" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/gant02"><img src="https://avatars1.githubusercontent.com/u/6771123?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gant02</b></sub></a><br /><a href="https://github.com/capacitor-community/admob/commits?author=gant02" title="Code">💻</a></td>
-    <td align="center"><a href="https://www.saninnsalas.com"><img src="https://avatars1.githubusercontent.com/u/5490201?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Saninn Salas Diaz</b></sub></a><br /><a href="https://github.com/capacitor-community/admob/commits?author=distante" title="Code">💻</a></td>
-    <td align="center"><a href="https://www.nicolueg.com"><img src="https://avatars.githubusercontent.com/u/48101693?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Nico Lueg</b></sub></a><br /><a href="https://github.com/capacitor-community/admob/commits?author=NLueg" title="Code">💻</a></td>
+    <td align="center"><a href="https://wako.app"><img src="https://avatars1.githubusercontent.com/u/216573?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jean-Baptiste Malatrasi</b></sub></a><br /><a href="https://github.com/badroniaimi/admob/commits?author=JumBay" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/gant02"><img src="https://avatars1.githubusercontent.com/u/6771123?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gant02</b></sub></a><br /><a href="https://github.com/badroniaimi/admob/commits?author=gant02" title="Code">💻</a></td>
+    <td align="center"><a href="https://www.saninnsalas.com"><img src="https://avatars1.githubusercontent.com/u/5490201?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Saninn Salas Diaz</b></sub></a><br /><a href="https://github.com/badroniaimi/admob/commits?author=distante" title="Code">💻</a></td>
+    <td align="center"><a href="https://www.nicolueg.com"><img src="https://avatars.githubusercontent.com/u/48101693?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Nico Lueg</b></sub></a><br /><a href="https://github.com/badroniaimi/admob/commits?author=NLueg" title="Code">💻</a></td>
   </tr>
 </table>
 
