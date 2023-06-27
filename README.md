@@ -1,6 +1,6 @@
 <p align="center"><br><img src="https://user-images.githubusercontent.com/236501/85893648-1c92e880-b7a8-11ea-926d-95355b8175c7.png" width="128" height="128" /></p>
 <h3 align="center">AdMob</h3>
-<p align="center"><strong><code>@badroniaimi/admob</code></strong></p>
+<p align="center"><strong><code>@capacitor-community/admob</code></strong></p>
 <p align="center">
   Capacitor community plugin for native AdMob.
 </p>
@@ -8,10 +8,10 @@
 <p align="center">
   <img src="https://img.shields.io/maintenance/yes/2023?style=flat-square" />
   <!-- <a href="https://github.com/capacitor-community/example/actions?query=workflow%3A%22CI%22"><img src="https://img.shields.io/github/workflow/status/capacitor-community/example/CI?style=flat-square" /></a> -->
-  <a href="https://www.npmjs.com/package/@badroniaimi/admob"><img src="https://img.shields.io/npm/l/@badroniaimi/admob?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/l/@capacitor-community/admob?style=flat-square" /></a>
 <br>
-  <a href="https://www.npmjs.com/package/@badroniaimi/admob"><img src="https://img.shields.io/npm/dw/@badroniaimi/admob?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/@badroniaimi/admob"><img src="https://img.shields.io/npm/v/@badroniaimi/admob?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/dw/@capacitor-community/admob?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/v/@capacitor-community/admob?style=flat-square" /></a>
 </p>
 
 ## Maintainers
@@ -24,15 +24,15 @@
 Maintenance Status: Actively Maintained
 
 ## Contributors ✨
-<a href="https://github.com/badroniaimi/admob/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=badroniaimi/admob" />
+<a href="https://github.com/capacitor-community/admob/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=capacitor-community/admob" />
 </a>
 
 Made with [contributors-img](https://contrib.rocks).
 
 ## Demo
 
-[Demo code is here.](https://github.com/badroniaimi/admob/tree/master/demo)
+[Demo code is here.](https://github.com/capacitor-community/admob/tree/master/demo)
 
 ### Screenshots
 
@@ -45,21 +45,21 @@ Made with [contributors-img](https://contrib.rocks).
 If you use capacitor 5:
 
 ```
-% npm install --save @badroniaimi/admob@5.0.0
+% npm install --save @capacitor-community/admob@5.0.0
 % npx cap update
 ```
 
 If you use capacitor 4:
 
 ```
-% npm install --save @badroniaimi/admob@4.0.0
+% npm install --save @capacitor-community/admob@4.0.0
 % npx cap update
 ```
 
 capacitor 3:
 
 ```
-% npm install --save @badroniaimi/admob@3.3.0
+% npm install --save @capacitor-community/admob@3.3.0
 % npx cap update
 ```
 
@@ -115,7 +115,7 @@ Don't forget to replace `[APP_ID]` by your AdMob application Id.
 ### Initialize AdMob
 
 ```ts
-import { AdMob } from '@badroniaimi/admob';
+import { AdMob } from '@capacitor-community/admob';
 
 export async function initialize(): Promise<void> {
   const { status } = await AdMob.trackingAuthorizationStatus();
@@ -152,7 +152,7 @@ Send and array of device Ids in `testingDevices? to use production like ads on y
 ### Show Banner
 
 ```ts
-import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, BannerAdPluginEvents, AdMobBannerSize } from '@badroniaimi/admob';
+import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, BannerAdPluginEvents, AdMobBannerSize } from '@capacitor-community/admob';
 
 export async function banner(): Promise<void> {
     AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
@@ -178,7 +178,7 @@ export async function banner(): Promise<void> {
 ### Show Interstitial
 
 ```ts
-import { AdMob, AdOptions, AdLoadInfo, InterstitialAdPluginEvents } from '@badroniaimi/admob';
+import { AdMob, AdOptions, AdLoadInfo, InterstitialAdPluginEvents } from '@capacitor-community/admob';
 
 export async function interstitial(): Promise<void> {
   AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info: AdLoadInfo) => {
@@ -198,7 +198,7 @@ export async function interstitial(): Promise<void> {
 ### Show RewardVideo
 
 ```ts
-import { AdMob, RewardAdOptions, AdLoadInfo, RewardAdPluginEvents, AdMobRewardItem } from '@badroniaimi/admob';
+import { AdMob, RewardAdOptions, AdLoadInfo, RewardAdPluginEvents, AdMobRewardItem } from '@capacitor-community/admob';
 
 export async function rewardVideo(): Promise<void> {
   AdMob.addListener(RewardAdPluginEvents.Loaded, (info: AdLoadInfo) => {
@@ -865,9 +865,7 @@ https://developers.google.com/admob/android/rewarded-video-adapters?hl=en
 
 From T, pick a set of properties whose keys are in the union K
 
-<code>{
- [P in K]: T[P];
- }</code>
+<code>{ [P in K]: T[P]; }</code>
 
 
 ### Enums

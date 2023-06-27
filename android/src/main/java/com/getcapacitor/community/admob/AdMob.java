@@ -98,7 +98,11 @@ public class AdMob extends Plugin {
     // Show a banner Ad
     @PluginMethod
     public void showBanner(final PluginCall call) {
-        bannerExecutor.showBanner(call);
+        try {
+            bannerExecutor.showBanner(call);
+        } catch (Exception ex) {
+            call.reject("An unexpected error occurred.", ex);
+        }
     }
 
     // Hide the banner, remove it from screen, but can show it later
