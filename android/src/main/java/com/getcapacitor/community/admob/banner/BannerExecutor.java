@@ -189,14 +189,16 @@ public class BannerExecutor extends Executor {
 
     private void updateExistingAdView(AdOptions adOptions) {
         try {
-            activitySupplier
-                .get()
-                .runOnUiThread(
-                    () -> {
-                        final AdRequest adRequest = RequestHelper.createRequest(adOptions);
-                        mAdView.loadAd(adRequest);
-                    }
-                );
+            if (activitySupplier != null && activitySupplier.get() != null) {
+                activitySupplier
+                    .get()
+                    .runOnUiThread(
+                        () -> {
+                            final AdRequest adRequest = RequestHelper.createRequest(adOptions);
+                            if (mAdView != null) mAdView.loadAd(adRequest);
+                        }
+                    );
+            }
         } catch (Exception ex) {
             Log.d(logTag, "Failed updating existing AdView");
         }
