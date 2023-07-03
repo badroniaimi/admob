@@ -1,6 +1,6 @@
 <p align="center"><br><img src="https://user-images.githubusercontent.com/236501/85893648-1c92e880-b7a8-11ea-926d-95355b8175c7.png" width="128" height="128" /></p>
 <h3 align="center">AdMob</h3>
-<p align="center"><strong><code>@capacitor-community/admob</code></strong></p>
+<p align="center"><strong><code>capacitor-badr-admob</code></strong></p>
 <p align="center">
   Capacitor community plugin for native AdMob.
 </p>
@@ -8,10 +8,10 @@
 <p align="center">
   <img src="https://img.shields.io/maintenance/yes/2023?style=flat-square" />
   <!-- <a href="https://github.com/capacitor-community/example/actions?query=workflow%3A%22CI%22"><img src="https://img.shields.io/github/workflow/status/capacitor-community/example/CI?style=flat-square" /></a> -->
-  <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/l/@capacitor-community/admob?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/capacitor-badr-admob"><img src="https://img.shields.io/npm/l/@capacitor-community/admob?style=flat-square" /></a>
 <br>
-  <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/dw/@capacitor-community/admob?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/@capacitor-community/admob"><img src="https://img.shields.io/npm/v/@capacitor-community/admob?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/capacitor-badr-admob"><img src="https://img.shields.io/npm/dw/@capacitor-community/admob?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/capacitor-badr-admob"><img src="https://img.shields.io/npm/v/@capacitor-community/admob?style=flat-square" /></a>
 </p>
 
 ## Maintainers
@@ -42,24 +42,9 @@ Made with [contributors-img](https://contrib.rocks).
 | **Android** | ![](demo/screenshots/md_banner.png)  | ![](demo/screenshots/md_interstitial.png)  | ![](demo/screenshots/md_reward.png)  |
 
 ## Installation
-If you use capacitor 5:
 
 ```
-% npm install --save @capacitor-community/admob@5.0.0
-% npx cap update
-```
-
-If you use capacitor 4:
-
-```
-% npm install --save @capacitor-community/admob@4.0.0
-% npx cap update
-```
-
-capacitor 3:
-
-```
-% npm install --save @capacitor-community/admob@3.3.0
+% npm install --save capacitor-badr-admob@1.0.6
 % npx cap update
 ```
 
@@ -115,7 +100,7 @@ Don't forget to replace `[APP_ID]` by your AdMob application Id.
 ### Initialize AdMob
 
 ```ts
-import { AdMob } from '@capacitor-community/admob';
+import { AdMob } from 'capacitor-badr-admob';
 
 export async function initialize(): Promise<void> {
   const { status } = await AdMob.trackingAuthorizationStatus();
@@ -152,7 +137,7 @@ Send and array of device Ids in `testingDevices? to use production like ads on y
 ### Show Banner
 
 ```ts
-import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, BannerAdPluginEvents, AdMobBannerSize } from '@capacitor-community/admob';
+import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, BannerAdPluginEvents, AdMobBannerSize } from 'capacitor-badr-admob';
 
 export async function banner(): Promise<void> {
     AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
@@ -178,7 +163,7 @@ export async function banner(): Promise<void> {
 ### Show Interstitial
 
 ```ts
-import { AdMob, AdOptions, AdLoadInfo, InterstitialAdPluginEvents } from '@capacitor-community/admob';
+import { AdMob, AdOptions, AdLoadInfo, InterstitialAdPluginEvents } from 'capacitor-badr-admob';
 
 export async function interstitial(): Promise<void> {
   AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info: AdLoadInfo) => {
@@ -198,7 +183,7 @@ export async function interstitial(): Promise<void> {
 ### Show RewardVideo
 
 ```ts
-import { AdMob, RewardAdOptions, AdLoadInfo, RewardAdPluginEvents, AdMobRewardItem } from '@capacitor-community/admob';
+import { AdMob, RewardAdOptions, AdLoadInfo, RewardAdPluginEvents, AdMobRewardItem } from 'capacitor-badr-admob';
 
 export async function rewardVideo(): Promise<void> {
   AdMob.addListener(RewardAdPluginEvents.Loaded, (info: AdLoadInfo) => {
