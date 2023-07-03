@@ -16,19 +16,12 @@
 
 ## Maintainers
 
-| Maintainer          | GitHub                              | Social                                | Sponsoring Company                             |
-| ------------------- | ----------------------------------- | ------------------------------------- | ---------------------------------------------- |
-| Masahiko Sakakibara | [rdlabo](https://github.com/rdlabo) | [@rdlabo](https://twitter.com/rdlabo) | RELATION DESIGN LABO, GENERAL INC. ASSOCIATION |
-| Saninn Salas Diaz | [Saninn Salas Diaz](https://github.com/distante) | [@SaninnSalas](https://twitter.com/SaninnSalas) | |
+| Maintainer          | GitHub                              | Social                                |
+| ------------------- | ----------------------------------- | ------------------------------------- | 
+| SOUSSI NIAIMI Badr-Eddine | [badroniaimi](https://github.com/badroniaimi) | [@badroniaimi](https://twitter.com/badroniaimi) |
 
 Maintenance Status: Actively Maintained
 
-## Contributors ✨
-<a href="https://github.com/capacitor-community/admob/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=capacitor-community/admob" />
-</a>
-
-Made with [contributors-img](https://contrib.rocks).
 
 ## Demo
 
@@ -850,7 +843,9 @@ https://developers.google.com/admob/android/rewarded-video-adapters?hl=en
 
 From T, pick a set of properties whose keys are in the union K
 
-<code>{ [P in K]: T[P]; }</code>
+<code>{
+ [P in K]: T[P];
+ }</code>
 
 
 ### Enums
