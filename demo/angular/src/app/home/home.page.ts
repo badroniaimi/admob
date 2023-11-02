@@ -12,7 +12,10 @@ import {
   BannerAdSize,
   InterstitialAdPluginEvents,
   RewardAdPluginEvents,
-} from '@badroniaimi/admob';
+  AdmobConsentInfo,
+  AdmobConsentStatus,
+  AdmobConsentDebugGeography,
+} from '@capacitor-community/admob';
 import { ReplaySubject } from 'rxjs';
 import {
   bannerTopOptions,
@@ -61,6 +64,7 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
   /**
    * For ion-item of template disabled
    */
+  public isConsentAvailable = false;
   public isPrepareBanner = false;
   public isPrepareReward = false;
   public isPrepareInterstitial = false;
@@ -113,6 +117,74 @@ export class HomePage implements ViewWillEnter, ViewWillLeave {
 
   ionViewWillLeave() {
     this.listenerHandlers.forEach(handler => handler.remove());
+  }
+
+  /**
+   * ==================== Consent ====================
+   */
+
+  async requestConsentInfo() {
+    let consentInfo: AdmobConsentInfo = await AdMob.requestConsentInfo({
+      debugGeography: AdmobConsentDebugGeography.EEA,
+      testDeviceIdentifiers: ['163FB114BEF1FC09FF772E930677A8D5'],
+    });
+
+    if (
+      consentInfo.status === AdmobConsentStatus.REQUIRED ||
+      consentInfo.status === AdmobConsentStatus.OBTAINED
+    ) {
+      this.isConsentAvailable = true;
+
+      const toast = await this.toastCtrl.create({
+        message: `Consent info found: ${JSON.stringify(consentInfo)}`,
+        duration: 3000,
+      });
+      await toast.present();
+    } else {
+      const toast = await this.toastCtrl.create({
+        message: `No consent info found, please make sure you created it on Admob Website.`,
+        duration: 3000,
+      });
+      await toast.present();
+    }
+  }
+
+  async showConsentForm() {
+    try {
+      const { status } = await AdMob.showConsentForm();
+      const toast = await this.toastCtrl.create({
+        message: `Consent form showed with status: ${status}`,
+        duration: 3000,
+      });
+      await toast.present();
+    } catch (e) {
+      const toast = await this.toastCtrl.create({
+        message: `'Error on showConsentForm. See Logs`,
+        duration: 3000,
+        color: 'danger',
+      });
+      await toast.present();
+      console.error('Error on showConsentForm', e);
+    }
+  }
+
+  async resetConsentInfo() {
+    try {
+      await AdMob.resetConsentInfo();
+      const toast = await this.toastCtrl.create({
+        message: `Consent info have been reset. You can show new consent form now.`,
+        duration: 3000,
+      });
+      await toast.present();
+    } catch (e) {
+      const toast = await this.toastCtrl.create({
+        message: `Error on resetConsentInfo. See Logs`,
+        duration: 3000,
+        color: 'danger',
+      });
+      await toast.present();
+      console.error('Error on resetConsentInfo', e);
+    }
   }
 
   /**

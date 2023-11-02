@@ -9,6 +9,7 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.community.admob.banner.BannerExecutor;
+import com.getcapacitor.community.admob.consent.AdConsentExecutor;
 import com.getcapacitor.community.admob.helpers.AuthorizationStatusEnum;
 import com.getcapacitor.community.admob.interstitial.AdInterstitialExecutor;
 import com.getcapacitor.community.admob.interstitial.InterstitialAdCallbackAndListeners;
@@ -46,6 +47,13 @@ public class AdMob extends Plugin {
         InterstitialAdCallbackAndListeners.INSTANCE
     );
 
+    private final AdConsentExecutor adConsentExecutor = new AdConsentExecutor(
+        this::getContext,
+        this::getActivity,
+        this::notifyListeners,
+        getLogTag()
+    );
+
     // Initialize AdMob with appId
     @PluginMethod
     public void initialize(final PluginCall call) {
@@ -67,10 +75,31 @@ public class AdMob extends Plugin {
     }
 
     @PluginMethod
+    public void requestTrackingAuthorization(final PluginCall call) {
+        call.resolve();
+    }
+
+    @PluginMethod
     public void trackingAuthorizationStatus(final PluginCall call) {
         JSObject response = new JSObject();
         response.put("status", AuthorizationStatusEnum.AUTHORIZED.getStatus());
         call.resolve(response);
+    }
+
+    // User Consent
+    @PluginMethod
+    public void requestConsentInfo(final PluginCall call) {
+        adConsentExecutor.requestConsentInfo(call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void showConsentForm(final PluginCall call) {
+        adConsentExecutor.showConsentForm(call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void resetConsentInfo(final PluginCall call) {
+        adConsentExecutor.resetConsentInfo(call, this::notifyListeners);
     }
 
     @PluginMethod
@@ -98,11 +127,7 @@ public class AdMob extends Plugin {
     // Show a banner Ad
     @PluginMethod
     public void showBanner(final PluginCall call) {
-        try {
-            bannerExecutor.showBanner(call);
-        } catch (Exception ex) {
-            call.reject("An unexpected error occurred.", ex);
-        }
+        bannerExecutor.showBanner(call);
     }
 
     // Hide the banner, remove it from screen, but can show it later

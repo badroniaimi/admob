@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 <!-- Your Issue is plugin Issue or your implements issue? Please check demo code, and clear which is issue.
-     https://github.com/badroniaimi/admob/tree/master/demo/angular -->
+     https://github.com/capacitor-community/admob/tree/master/demo/angular -->
 
 
 **To Reproduce**
