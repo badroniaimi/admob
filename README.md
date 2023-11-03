@@ -37,7 +37,7 @@ Maintenance Status: Actively Maintained
 ## Installation
 
 ```
-% npm install --save capacitor-badr-admob@1.0.6
+% npm install --save capacitor-badr-admob@1.0.7
 % npx cap update
 ```
 
@@ -126,6 +126,47 @@ Default value is `true`. If you don't want to track, set requestTrackingAuthoriz
 
 Send and array of device Ids in `testingDevices? to use production like ads on your specified devices -> https://developers.google.com/admob/android/test-ads#enable_test_devices
 
+### User Message Platform (UMP)
+
+Later this year, Google will require all publishers serving ads to EEA and UK users to use a Google-certified Consent Management Platform (CMP)
+
+Currently we just support Google's consent management solution.
+
+To use UMP, you must [create your GDPR messages](https://support.google.com/admob/answer/10113207?hl=en&ref_topic=10105230&sjid=6731900490614517032-AP)
+
+You may need to [setup IDFA messages](https://support.google.com/admob/answer/10115027?hl=en), it will work along with GDPR messages and will show when users are not in EEA and UK.
+
+Example of how to use UMP
+
+```ts
+import { AdMob, AdmobConsentStatus, AdmobConsentDebugGeography } from 'capacitor-badr-admob';
+
+async showConsent() {
+  const consentInfo = await AdMob.requestConsentInfo();
+
+  if (consentInfo.isConsentFormAvailable && consentInfo.status === AdmobConsentStatus.REQUIRED) {
+    const {status} = await AdMob.showConsentForm();
+  }
+}
+```
+
+If you testing on real device, you have to set `debugGeography` and add your device ID to `testDeviceIdentifiers`. You can find your device ID with logcat (Android) or XCode (iOS).
+
+```ts
+  const consentInfo = await AdMob.requestConsentInfo({
+    debugGeography: AdmobConsentDebugGeography.EEA,
+    testDeviceIdentifiers: ['YOUR_DEVICE_ID']
+  });
+```
+
+**Note**: When testing, if you choose not consent (Manage -> Confirm Choices). The ads may not load/show. Even on testing enviroment. This is normal. It will work on Production so don't worry.
+
+**Note**: The order in which they are combined with other methods is as follows.
+
+1. AdMob.initialize
+2. AdMob.requestConsentInfo
+3. AdMob.showConsentForm (If consent form required )
+3/ AdMob.showBanner
 
 ### Show Banner
 
