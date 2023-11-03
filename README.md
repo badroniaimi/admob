@@ -280,6 +280,7 @@ AdMob.addListener(RewardAdPluginEvents.Rewarded, async () => {
 
 * [`initialize(...)`](#initialize)
 * [`trackingAuthorizationStatus()`](#trackingauthorizationstatus)
+* [`requestTrackingAuthorization()`](#requesttrackingauthorization)
 * [`setApplicationMuted(...)`](#setapplicationmuted)
 * [`setApplicationVolume(...)`](#setapplicationvolume)
 * [`showBanner(...)`](#showbanner)
@@ -292,6 +293,9 @@ AdMob.addListener(RewardAdPluginEvents.Rewarded, async () => {
 * [`addListener(BannerAdPluginEvents.Opened, ...)`](#addlistenerbanneradplugineventsopened-)
 * [`addListener(BannerAdPluginEvents.Closed, ...)`](#addlistenerbanneradplugineventsclosed-)
 * [`addListener(BannerAdPluginEvents.AdImpression, ...)`](#addlistenerbanneradplugineventsadimpression-)
+* [`requestConsentInfo(...)`](#requestconsentinfo)
+* [`showConsentForm()`](#showconsentform)
+* [`resetConsentInfo()`](#resetconsentinfo)
 * [`prepareInterstitial(...)`](#prepareinterstitial)
 * [`showInterstitial()`](#showinterstitial)
 * [`addListener(InterstitialAdPluginEvents.FailedToLoad, ...)`](#addlistenerinterstitialadplugineventsfailedtoload-)
@@ -320,7 +324,7 @@ AdMob.addListener(RewardAdPluginEvents.Rewarded, async () => {
 ### initialize(...)
 
 ```typescript
-initialize(options: AdMobInitializationOptions) => Promise<void>
+initialize(options?: AdMobInitializationOptions) => Promise<void>
 ```
 
 Initialize AdMob with <a href="#admobinitializationoptions">AdMobInitializationOptions</a>
@@ -341,6 +345,18 @@ trackingAuthorizationStatus() => Promise<TrackingAuthorizationStatusInterface>
 Confirm requestTrackingAuthorization status (iOS &gt;14)
 
 **Returns:** <code>Promise&lt;<a href="#trackingauthorizationstatusinterface">TrackingAuthorizationStatusInterface</a>&gt;</code>
+
+--------------------
+
+
+### requestTrackingAuthorization()
+
+```typescript
+requestTrackingAuthorization() => Promise<void>
+```
+
+request requestTrackingAuthorization (iOS &gt;14).
+This is deprecated method. We recommend UMP Consent.
 
 --------------------
 
@@ -525,6 +541,47 @@ Unimplemented
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                         |              |
 
 **Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+
+--------------------
+
+
+### requestConsentInfo(...)
+
+```typescript
+requestConsentInfo(options?: AdmobConsentRequestOptions) => Promise<AdmobConsentInfo>
+```
+
+Request user consent information
+
+| Param         | Type                                                                              | Description           |
+| ------------- | --------------------------------------------------------------------------------- | --------------------- |
+| **`options`** | <code><a href="#admobconsentrequestoptions">AdmobConsentRequestOptions</a></code> | ConsentRequestOptions |
+
+**Returns:** <code>Promise&lt;<a href="#admobconsentinfo">AdmobConsentInfo</a>&gt;</code>
+
+--------------------
+
+
+### showConsentForm()
+
+```typescript
+showConsentForm() => Promise<AdmobConsentInfo>
+```
+
+Shows a google user consent form (rendered from your GDPR message config).
+
+**Returns:** <code>Promise&lt;<a href="#admobconsentinfo">AdmobConsentInfo</a>&gt;</code>
+
+--------------------
+
+
+### resetConsentInfo()
+
+```typescript
+resetConsentInfo() => Promise<void>
+```
+
+Resets the UMP SDK state. Call requestConsentInfo function again to allow user modify their consent
 
 --------------------
 
@@ -768,14 +825,13 @@ addListener(eventName: RewardAdPluginEvents.Showed, listenerFunc: () => void) =>
 
 #### AdMobInitializationOptions
 
-| Prop                               | Type                                                              | Description                                                                                                                                                                                                                                                |
-| ---------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`requestTrackingAuthorization`** | <code>boolean</code>                                              | Use or not requestTrackingAuthorization in iOS(&gt;14)                                                                                                                                                                                                     |
-| **`testingDevices`**               | <code>string[]</code>                                             | An Array of devices IDs that will be marked as tested devices if {@link <a href="#admobinitializationoptions">AdMobInitializationOptions.initializeForTesting</a>} is true (Real Ads will be served to Testing devices but they will not count as 'real'). |
-| **`initializeForTesting`**         | <code>boolean</code>                                              | If set to true, the devices on {@link <a href="#admobinitializationoptions">AdMobInitializationOptions.testingDevices</a>} will be registered to receive test production ads.                                                                              |
-| **`tagForChildDirectedTreatment`** | <code>boolean</code>                                              | For purposes of the Children's Online Privacy Protection Act (COPPA), there is a setting called tagForChildDirectedTreatment.                                                                                                                              |
-| **`tagForUnderAgeOfConsent`**      | <code>boolean</code>                                              | When using this feature, a Tag For Users under the Age of Consent in Europe (TFUA) parameter will be included in all future ad requests.                                                                                                                   |
-| **`maxAdContentRating`**           | <code><a href="#maxadcontentrating">MaxAdContentRating</a></code> | As an app developer, you can indicate whether you want Google to treat your content as child-directed when you make an ad request.                                                                                                                         |
+| Prop                               | Type                                                              | Description                                                                                                                                                                                                                                                 |
+| ---------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`testingDevices`**               | <code>string[]</code>                                             | An Array of devices IDs that will be marked as tested devices if {@link <a href="#admobinitializationoptions">AdMobInitializationOptions.initializeForTesting</a>} is true (Real Ads will be served to Testing devices, but they will not count as 'real'). |
+| **`initializeForTesting`**         | <code>boolean</code>                                              | If set to true, the devices on {@link <a href="#admobinitializationoptions">AdMobInitializationOptions.testingDevices</a>} will be registered to receive test production ads.                                                                               |
+| **`tagForChildDirectedTreatment`** | <code>boolean</code>                                              | For purposes of the Children's Online Privacy Protection Act (COPPA), there is a setting called tagForChildDirectedTreatment.                                                                                                                               |
+| **`tagForUnderAgeOfConsent`**      | <code>boolean</code>                                              | When using this feature, a Tag For Users under the Age of Consent in Europe (TFUA) parameter will be included in all future ad requests.                                                                                                                    |
+| **`maxAdContentRating`**           | <code><a href="#maxadcontentrating">MaxAdContentRating</a></code> | As an app developer, you can indicate whether you want Google to treat your content as child-directed when you make an ad request.                                                                                                                          |
 
 
 #### TrackingAuthorizationStatusInterface
@@ -837,6 +893,23 @@ https://developers.google.com/android/reference/com/google/android/gms/ads/AdErr
 | **`message`** | <code>string</code> | Gets the message describing the error. |
 
 
+#### AdmobConsentInfo
+
+| Prop                         | Type                                                              | Description                                           |
+| ---------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| **`status`**                 | <code><a href="#admobconsentstatus">AdmobConsentStatus</a></code> | The consent status of the user.                       |
+| **`isConsentFormAvailable`** | <code>boolean</code>                                              | If `true` a consent form is available and vice versa. |
+
+
+#### AdmobConsentRequestOptions
+
+| Prop                          | Type                                                                              | Description                                                                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **`debugGeography`**          | <code><a href="#admobconsentdebuggeography">AdmobConsentDebugGeography</a></code> | Sets the debug geography to test the consent locally.                                                        |
+| **`testDeviceIdentifiers`**   | <code>string[]</code>                                                             | An array of test device IDs to allow. Note: On iOS, the ID may renew if you uninstall and reinstall the app. |
+| **`tagForUnderAgeOfConsent`** | <code>boolean</code>                                                              | Set to `true` to provide the option for the user to accept being shown personalized ads.                     |
+
+
 #### AdLoadInfo
 
 | Prop           | Type                |
@@ -884,9 +957,7 @@ https://developers.google.com/admob/android/rewarded-video-adapters?hl=en
 
 From T, pick a set of properties whose keys are in the union K
 
-<code>{
- [P in K]: T[P];
- }</code>
+<code>{ [P in K]: T[P]; }</code>
 
 
 ### Enums
@@ -934,6 +1005,25 @@ From T, pick a set of properties whose keys are in the union K
 | **`Opened`**       | <code>"bannerAdOpened"</code>       | Open "Adsense" Event after user click banner                                                           |
 | **`Closed`**       | <code>"bannerAdClosed"</code>       | Close "Adsense" Event after user click banner                                                          |
 | **`AdImpression`** | <code>"bannerAdImpression"</code>   | Similarly, this method should be called when an impression is recorded for the ad by the mediated SDK. |
+
+
+#### AdmobConsentStatus
+
+| Members            | Value                       | Description                                                                           |
+| ------------------ | --------------------------- | ------------------------------------------------------------------------------------- |
+| **`NOT_REQUIRED`** | <code>'NOT_REQUIRED'</code> | User consent not required.                                                            |
+| **`OBTAINED`**     | <code>'OBTAINED'</code>     | User consent already obtained.                                                        |
+| **`REQUIRED`**     | <code>'REQUIRED'</code>     | User consent required but not yet obtained.                                           |
+| **`UNKNOWN`**      | <code>'UNKNOWN'</code>      | Unknown consent status, AdsConsent.requestInfoUpdate needs to be called to update it. |
+
+
+#### AdmobConsentDebugGeography
+
+| Members        | Value          | Description                                        |
+| -------------- | -------------- | -------------------------------------------------- |
+| **`DISABLED`** | <code>0</code> | Debug geography disabled.                          |
+| **`EEA`**      | <code>1</code> | Geography appears as in EEA for debug devices.     |
+| **`NOT_EEA`**  | <code>2</code> | Geography appears as not in EEA for debug devices. |
 
 
 #### InterstitialAdPluginEvents
