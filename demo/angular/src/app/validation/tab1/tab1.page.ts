@@ -75,7 +75,7 @@ export class Tab1Page implements ViewDidEnter, ViewWillEnter, ViewWillLeave {
 
   ionViewWillEnter() {
     const eventKeys = Object.keys(BannerAdPluginEvents);
-    eventKeys.forEach(key => {
+    eventKeys.forEach(async key => {
       const handler = AdMob.addListener(BannerAdPluginEvents[key], value => {
         this.helper.updateItem(
           this.eventItems,
@@ -84,7 +84,7 @@ export class Tab1Page implements ViewDidEnter, ViewWillEnter, ViewWillLeave {
           value,
         );
       });
-      this.listenerHandlers.push(handler);
+      this.listenerHandlers.push(await handler);
     });
 
     this.eventItems = JSON.parse(JSON.stringify(tryItems));

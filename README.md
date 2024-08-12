@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/maintenance/yes/2023?style=flat-square" />
+  <img src="https://img.shields.io/maintenance/yes/2024?style=flat-square" />
   <!-- <a href="https://github.com/capacitor-community/example/actions?query=workflow%3A%22CI%22"><img src="https://img.shields.io/github/workflow/status/capacitor-community/example/CI?style=flat-square" /></a> -->
   <a href="https://www.npmjs.com/package/capacitor-badr-admob"><img src="https://img.shields.io/npm/l/@capacitor-community/admob?style=flat-square" /></a>
 <br>
@@ -96,35 +96,40 @@ Don't forget to replace `[APP_ID]` by your AdMob application Id.
 import { AdMob } from 'capacitor-badr-admob';
 
 export async function initialize(): Promise<void> {
-  const { status } = await AdMob.trackingAuthorizationStatus();
-
-  if (status === 'notDetermined') {
-    /**
-     * If you want to explain TrackingAuthorization before showing the iOS dialog,
-     * you can show the modal here.
-     * ex)
-     * const modal = await this.modalCtrl.create({
-     *   component: RequestTrackingPage,
-     * });
-     * await modal.present();
-     * await modal.onDidDismiss();  // Wait for close modal
-     **/
-  }
+  await AdMob.initialize();
  
-  AdMob.initialize({
-    requestTrackingAuthorization: true,
-    testingDevices: ['2077ef9a63d2b398840261c8221a0c9b'],
-    initializeForTesting: true,
-  });
+  const [trackingInfo, consentInfo] = await Promise.all([
+   AdMob.trackingAuthorizationStatus(),
+   AdMob.requestConsentInfo(),
+  ]);
+ 
+  if (trackingInfo.status === 'notDetermined') {
+   /**
+    * If you want to explain TrackingAuthorization before showing the iOS dialog,
+    * you can show the modal here.
+    * ex)
+    * const modal = await this.modalCtrl.create({
+    *   component: RequestTrackingPage,
+    * });
+    * await modal.present();
+    * await modal.onDidDismiss();  // Wait for close modal
+    **/
+ 
+   await AdMob.requestTrackingAuthorization();
+  }
+
+  const authorizationStatus = await AdMob.trackingAuthorizationStatus();
+  if (
+          authorizationStatus.status === 'authorized' &&
+          consentInfo.isConsentFormAvailable &&
+          consentInfo.status === AdmobConsentStatus.REQUIRED
+  ) {
+   await AdMob.showConsentForm();
+  }
 }
 ```
 
-You can use option `requestTrackingAuthorization`. This change permission to require `AppTrackingTransparency` in iOS >= 14:
-https://developers.google.com/admob/ios/ios14
-
-Default value is `true`. If you don't want to track, set requestTrackingAuthorization `false`.
-
-Send and array of device Ids in `testingDevices? to use production like ads on your specified devices -> https://developers.google.com/admob/android/test-ads#enable_test_devices
+Send an array of device Ids in `testingDevices` to use production like ads on your specified devices -> https://developers.google.com/admob/android/test-ads#enable_test_devices
 
 ### User Message Platform (UMP)
 
@@ -442,7 +447,7 @@ Destroy the banner, remove it from screen.
 ### addListener(BannerAdPluginEvents.SizeChanged, ...)
 
 ```typescript
-addListener(eventName: BannerAdPluginEvents.SizeChanged, listenerFunc: (info: AdMobBannerSize) => void) => PluginListenerHandle
+addListener(eventName: BannerAdPluginEvents.SizeChanged, listenerFunc: (info: AdMobBannerSize) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                              | Description         |
@@ -450,7 +455,7 @@ addListener(eventName: BannerAdPluginEvents.SizeChanged, listenerFunc: (info: Ad
 | **`eventName`**    | <code><a href="#banneradpluginevents">BannerAdPluginEvents.SizeChanged</a></code> | bannerAdSizeChanged |
 | **`listenerFunc`** | <code>(info: <a href="#admobbannersize">AdMobBannerSize</a>) =&gt; void</code>    |                     |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -458,7 +463,7 @@ addListener(eventName: BannerAdPluginEvents.SizeChanged, listenerFunc: (info: Ad
 ### addListener(BannerAdPluginEvents.Loaded, ...)
 
 ```typescript
-addListener(eventName: BannerAdPluginEvents.Loaded, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: BannerAdPluginEvents.Loaded, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 Notice: request loaded Banner ad
@@ -468,7 +473,7 @@ Notice: request loaded Banner ad
 | **`eventName`**    | <code><a href="#banneradpluginevents">BannerAdPluginEvents.Loaded</a></code> | bannerAdLoaded |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                   |                |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -476,7 +481,7 @@ Notice: request loaded Banner ad
 ### addListener(BannerAdPluginEvents.FailedToLoad, ...)
 
 ```typescript
-addListener(eventName: BannerAdPluginEvents.FailedToLoad, listenerFunc: (info: AdMobError) => void) => PluginListenerHandle
+addListener(eventName: BannerAdPluginEvents.FailedToLoad, listenerFunc: (info: AdMobError) => void) => Promise<PluginListenerHandle>
 ```
 
 Notice: request failed Banner ad
@@ -486,7 +491,7 @@ Notice: request failed Banner ad
 | **`eventName`**    | <code><a href="#banneradpluginevents">BannerAdPluginEvents.FailedToLoad</a></code> | bannerAdFailedToLoad |
 | **`listenerFunc`** | <code>(info: <a href="#admoberror">AdMobError</a>) =&gt; void</code>               |                      |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -494,7 +499,7 @@ Notice: request failed Banner ad
 ### addListener(BannerAdPluginEvents.Opened, ...)
 
 ```typescript
-addListener(eventName: BannerAdPluginEvents.Opened, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: BannerAdPluginEvents.Opened, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 Notice: full-screen banner view will be presented in response to the user clicking on an ad.
@@ -504,7 +509,7 @@ Notice: full-screen banner view will be presented in response to the user clicki
 | **`eventName`**    | <code><a href="#banneradpluginevents">BannerAdPluginEvents.Opened</a></code> | bannerAdOpened |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                   |                |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -512,7 +517,7 @@ Notice: full-screen banner view will be presented in response to the user clicki
 ### addListener(BannerAdPluginEvents.Closed, ...)
 
 ```typescript
-addListener(eventName: BannerAdPluginEvents.Closed, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: BannerAdPluginEvents.Closed, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 Notice: The full-screen banner view will been dismissed.
@@ -522,7 +527,7 @@ Notice: The full-screen banner view will been dismissed.
 | **`eventName`**    | <code><a href="#banneradpluginevents">BannerAdPluginEvents.Closed</a></code> | bannerAdClosed |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                   |                |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -530,7 +535,7 @@ Notice: The full-screen banner view will been dismissed.
 ### addListener(BannerAdPluginEvents.AdImpression, ...)
 
 ```typescript
-addListener(eventName: BannerAdPluginEvents.AdImpression, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: BannerAdPluginEvents.AdImpression, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 Unimplemented
@@ -540,7 +545,7 @@ Unimplemented
 | **`eventName`**    | <code><a href="#banneradpluginevents">BannerAdPluginEvents.AdImpression</a></code> | AdImpression |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                         |              |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -617,7 +622,7 @@ Show interstitial ad when it’s ready
 ### addListener(InterstitialAdPluginEvents.FailedToLoad, ...)
 
 ```typescript
-addListener(eventName: InterstitialAdPluginEvents.FailedToLoad, listenerFunc: (error: AdMobError) => void) => PluginListenerHandle
+addListener(eventName: InterstitialAdPluginEvents.FailedToLoad, listenerFunc: (error: AdMobError) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                                           |
@@ -625,7 +630,7 @@ addListener(eventName: InterstitialAdPluginEvents.FailedToLoad, listenerFunc: (e
 | **`eventName`**    | <code><a href="#interstitialadpluginevents">InterstitialAdPluginEvents.FailedToLoad</a></code> |
 | **`listenerFunc`** | <code>(error: <a href="#admoberror">AdMobError</a>) =&gt; void</code>                          |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -633,7 +638,7 @@ addListener(eventName: InterstitialAdPluginEvents.FailedToLoad, listenerFunc: (e
 ### addListener(InterstitialAdPluginEvents.Loaded, ...)
 
 ```typescript
-addListener(eventName: InterstitialAdPluginEvents.Loaded, listenerFunc: (info: AdLoadInfo) => void) => PluginListenerHandle
+addListener(eventName: InterstitialAdPluginEvents.Loaded, listenerFunc: (info: AdLoadInfo) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                                     |
@@ -641,7 +646,7 @@ addListener(eventName: InterstitialAdPluginEvents.Loaded, listenerFunc: (info: A
 | **`eventName`**    | <code><a href="#interstitialadpluginevents">InterstitialAdPluginEvents.Loaded</a></code> |
 | **`listenerFunc`** | <code>(info: <a href="#adloadinfo">AdLoadInfo</a>) =&gt; void</code>                     |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -649,7 +654,7 @@ addListener(eventName: InterstitialAdPluginEvents.Loaded, listenerFunc: (info: A
 ### addListener(InterstitialAdPluginEvents.Dismissed, ...)
 
 ```typescript
-addListener(eventName: InterstitialAdPluginEvents.Dismissed, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: InterstitialAdPluginEvents.Dismissed, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                                        |
@@ -657,7 +662,7 @@ addListener(eventName: InterstitialAdPluginEvents.Dismissed, listenerFunc: () =>
 | **`eventName`**    | <code><a href="#interstitialadpluginevents">InterstitialAdPluginEvents.Dismissed</a></code> |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                                  |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -665,7 +670,7 @@ addListener(eventName: InterstitialAdPluginEvents.Dismissed, listenerFunc: () =>
 ### addListener(InterstitialAdPluginEvents.FailedToShow, ...)
 
 ```typescript
-addListener(eventName: InterstitialAdPluginEvents.FailedToShow, listenerFunc: (error: AdMobError) => void) => PluginListenerHandle
+addListener(eventName: InterstitialAdPluginEvents.FailedToShow, listenerFunc: (error: AdMobError) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                                           |
@@ -673,7 +678,7 @@ addListener(eventName: InterstitialAdPluginEvents.FailedToShow, listenerFunc: (e
 | **`eventName`**    | <code><a href="#interstitialadpluginevents">InterstitialAdPluginEvents.FailedToShow</a></code> |
 | **`listenerFunc`** | <code>(error: <a href="#admoberror">AdMobError</a>) =&gt; void</code>                          |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -681,7 +686,7 @@ addListener(eventName: InterstitialAdPluginEvents.FailedToShow, listenerFunc: (e
 ### addListener(InterstitialAdPluginEvents.Showed, ...)
 
 ```typescript
-addListener(eventName: InterstitialAdPluginEvents.Showed, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: InterstitialAdPluginEvents.Showed, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                                     |
@@ -689,7 +694,7 @@ addListener(eventName: InterstitialAdPluginEvents.Showed, listenerFunc: () => vo
 | **`eventName`**    | <code><a href="#interstitialadpluginevents">InterstitialAdPluginEvents.Showed</a></code> |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                               |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -727,7 +732,7 @@ Show a reward video ad
 ### addListener(RewardAdPluginEvents.FailedToLoad, ...)
 
 ```typescript
-addListener(eventName: RewardAdPluginEvents.FailedToLoad, listenerFunc: (error: AdMobError) => void) => PluginListenerHandle
+addListener(eventName: RewardAdPluginEvents.FailedToLoad, listenerFunc: (error: AdMobError) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                               |
@@ -735,7 +740,7 @@ addListener(eventName: RewardAdPluginEvents.FailedToLoad, listenerFunc: (error: 
 | **`eventName`**    | <code><a href="#rewardadpluginevents">RewardAdPluginEvents.FailedToLoad</a></code> |
 | **`listenerFunc`** | <code>(error: <a href="#admoberror">AdMobError</a>) =&gt; void</code>              |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -743,7 +748,7 @@ addListener(eventName: RewardAdPluginEvents.FailedToLoad, listenerFunc: (error: 
 ### addListener(RewardAdPluginEvents.Loaded, ...)
 
 ```typescript
-addListener(eventName: RewardAdPluginEvents.Loaded, listenerFunc: (info: AdLoadInfo) => void) => PluginListenerHandle
+addListener(eventName: RewardAdPluginEvents.Loaded, listenerFunc: (info: AdLoadInfo) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                         |
@@ -751,7 +756,7 @@ addListener(eventName: RewardAdPluginEvents.Loaded, listenerFunc: (info: AdLoadI
 | **`eventName`**    | <code><a href="#rewardadpluginevents">RewardAdPluginEvents.Loaded</a></code> |
 | **`listenerFunc`** | <code>(info: <a href="#adloadinfo">AdLoadInfo</a>) =&gt; void</code>         |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -759,7 +764,7 @@ addListener(eventName: RewardAdPluginEvents.Loaded, listenerFunc: (info: AdLoadI
 ### addListener(RewardAdPluginEvents.Rewarded, ...)
 
 ```typescript
-addListener(eventName: RewardAdPluginEvents.Rewarded, listenerFunc: (reward: AdMobRewardItem) => void) => PluginListenerHandle
+addListener(eventName: RewardAdPluginEvents.Rewarded, listenerFunc: (reward: AdMobRewardItem) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                             |
@@ -767,7 +772,7 @@ addListener(eventName: RewardAdPluginEvents.Rewarded, listenerFunc: (reward: AdM
 | **`eventName`**    | <code><a href="#rewardadpluginevents">RewardAdPluginEvents.Rewarded</a></code>   |
 | **`listenerFunc`** | <code>(reward: <a href="#admobrewarditem">AdMobRewardItem</a>) =&gt; void</code> |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -775,7 +780,7 @@ addListener(eventName: RewardAdPluginEvents.Rewarded, listenerFunc: (reward: AdM
 ### addListener(RewardAdPluginEvents.Dismissed, ...)
 
 ```typescript
-addListener(eventName: RewardAdPluginEvents.Dismissed, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: RewardAdPluginEvents.Dismissed, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                            |
@@ -783,7 +788,7 @@ addListener(eventName: RewardAdPluginEvents.Dismissed, listenerFunc: () => void)
 | **`eventName`**    | <code><a href="#rewardadpluginevents">RewardAdPluginEvents.Dismissed</a></code> |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                      |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -791,7 +796,7 @@ addListener(eventName: RewardAdPluginEvents.Dismissed, listenerFunc: () => void)
 ### addListener(RewardAdPluginEvents.FailedToShow, ...)
 
 ```typescript
-addListener(eventName: RewardAdPluginEvents.FailedToShow, listenerFunc: (error: AdMobError) => void) => PluginListenerHandle
+addListener(eventName: RewardAdPluginEvents.FailedToShow, listenerFunc: (error: AdMobError) => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                               |
@@ -799,7 +804,7 @@ addListener(eventName: RewardAdPluginEvents.FailedToShow, listenerFunc: (error: 
 | **`eventName`**    | <code><a href="#rewardadpluginevents">RewardAdPluginEvents.FailedToShow</a></code> |
 | **`listenerFunc`** | <code>(error: <a href="#admoberror">AdMobError</a>) =&gt; void</code>              |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -807,7 +812,7 @@ addListener(eventName: RewardAdPluginEvents.FailedToShow, listenerFunc: (error: 
 ### addListener(RewardAdPluginEvents.Showed, ...)
 
 ```typescript
-addListener(eventName: RewardAdPluginEvents.Showed, listenerFunc: () => void) => PluginListenerHandle
+addListener(eventName: RewardAdPluginEvents.Showed, listenerFunc: () => void) => Promise<PluginListenerHandle>
 ```
 
 | Param              | Type                                                                         |
@@ -815,7 +820,7 @@ addListener(eventName: RewardAdPluginEvents.Showed, listenerFunc: () => void) =>
 | **`eventName`**    | <code><a href="#rewardadpluginevents">RewardAdPluginEvents.Showed</a></code> |
 | **`listenerFunc`** | <code>() =&gt; void</code>                                                   |
 
-**Returns:** <code><a href="#pluginlistenerhandle">PluginListenerHandle</a></code>
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
 
 --------------------
 
@@ -957,7 +962,9 @@ https://developers.google.com/admob/android/rewarded-video-adapters?hl=en
 
 From T, pick a set of properties whose keys are in the union K
 
-<code>{ [P in K]: T[P]; }</code>
+<code>{
+ [P in K]: T[P];
+ }</code>
 
 
 ### Enums
