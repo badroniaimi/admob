@@ -10,9 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
+
 import androidx.annotation.NonNull;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.util.Supplier;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.community.admob.helpers.AdViewIdHelper;
@@ -33,13 +35,13 @@ public class BannerExecutor extends Executor {
     private RelativeLayout mAdViewLayout;
     private AdView mAdView;
     private ViewGroup mViewGroup;
-    private View.OnApplyWindowInsetsListener mInsetsListener;
 
     public BannerExecutor(
             Supplier<Context> contextSupplier,
             Supplier<Activity> activitySupplier,
             BiConsumer<String, JSObject> notifyListenersFunction,
-            String pluginLogTag) {
+            String pluginLogTag
+    ) {
         super(contextSupplier, activitySupplier, notifyListenersFunction, pluginLogTag, "BannerExecutor");
     }
 
@@ -106,29 +108,19 @@ public class BannerExecutor extends Executor {
             // set Safe Area only for Android 15+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 View rootView = activitySupplier.get().getWindow().getDecorView();
+                rootView.setOnApplyWindowInsetsListener((v, insets) -> {
+                    int bottomInset = insets.getDisplayCutout() != null ? insets.getSystemWindowInsets().bottom : insets.getStableInsets().bottom;
+                    int topInset = insets.getDisplayCutout() != null ? insets.getSystemWindowInsets().top : insets.getStableInsets().top;
 
-                // Remove any existing insets listener to prevent conflicts
-                rootView.setOnApplyWindowInsetsListener(null);
-
-                // Create and store the new insets listener with visibility check
-                mInsetsListener = (v, insets) -> {
-                    // Only apply insets if banner is visible to prevent interference
-                    if (mAdViewLayout != null && mAdViewLayout.getVisibility() == View.VISIBLE && mAdView != null) {
-                        int bottomInset = insets.getSystemWindowInsetBottom();
-                        int topInset = insets.getSystemWindowInsetTop();
-
-                        if ("TOP_CENTER".equals(adOptions.position)) {
-                            mAdViewLayoutParams.setMargins(0, topInset, 0, 0);
-                        } else {
-                            mAdViewLayoutParams.setMargins(0, 0, 0, bottomInset);
-                        }
-
-                        mAdViewLayout.setLayoutParams(mAdViewLayoutParams);
+                    if ("TOP_CENTER".equals(adOptions.position)) {
+                        mAdViewLayoutParams.setMargins(0, topInset, 0, 0);
+                    } else {
+                        mAdViewLayoutParams.setMargins(0, 0, 0, bottomInset);
                     }
-                    return insets;
-                };
 
-                rootView.setOnApplyWindowInsetsListener(mInsetsListener);
+                    mAdViewLayout.setLayoutParams(mAdViewLayoutParams);
+                    return insets;
+                });
             }
 
             mAdViewLayout.setLayoutParams(mAdViewLayoutParams);
@@ -179,16 +171,6 @@ public class BannerExecutor extends Executor {
 
                                 notifyListeners(BannerAdPluginEvents.SizeChanged.getWebEventName(), sizeInfo);
 
-                                // Remove the insets listener and reset to default only for Android 15+
-                                // Keep mInsetsListener reference so resumeBanner() can restore it
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                                    View rootView = activitySupplier.get().getWindow().getDecorView();
-                                    rootView.setOnApplyWindowInsetsListener(null);
-
-                                    // Force the root view to clear any bottom padding
-                                    rootView.setPadding(0, 0, 0, 0);
-                                    rootView.requestApplyInsets();
-                                }
 
                                 call.resolve();
                             }
@@ -211,14 +193,6 @@ public class BannerExecutor extends Executor {
                                 mAdViewLayout.setVisibility(View.VISIBLE);
                                 mAdView.resume();
 
-                                // Re-apply the insets listener when resuming banner only for Android 15+
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
-                                        && mInsetsListener != null) {
-                                    View rootView = activitySupplier.get().getWindow().getDecorView();
-                                    rootView.setOnApplyWindowInsetsListener(mInsetsListener);
-                                    // Request to re-apply insets
-                                    rootView.requestApplyInsets();
-                                }
 
                                 final BannerAdSizeInfo sizeInfo = new BannerAdSizeInfo(mAdView);
                                 notifyListeners(BannerAdPluginEvents.SizeChanged.getWebEventName(), sizeInfo);
@@ -249,14 +223,6 @@ public class BannerExecutor extends Executor {
                                     mAdView.destroy();
                                     mAdView = null;
 
-                                    // Remove listener and clear any bottom padding only for Android 15+
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                                        View rootView = activitySupplier.get().getWindow().getDecorView();
-                                        rootView.setOnApplyWindowInsetsListener(null);
-                                        mInsetsListener = null;
-                                        rootView.setPadding(0, 0, 0, 0);
-                                        rootView.requestApplyInsets();
-                                    }
 
                                     Log.d(logTag, "Banner AD Removed");
                                     final BannerAdSizeInfo sizeInfo = new BannerAdSizeInfo(0, 0);
@@ -324,15 +290,6 @@ public class BannerExecutor extends Executor {
                                             mAdView = null;
                                         }
 
-                                        // Remove listener and clear any bottom padding when ad fails only for Android
-                                        // 15+
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                                            View rootView = activitySupplier.get().getWindow().getDecorView();
-                                            rootView.setOnApplyWindowInsetsListener(null);
-                                            mInsetsListener = null;
-                                            rootView.setPadding(0, 0, 0, 0);
-                                            rootView.requestApplyInsets();
-                                        }
 
                                         final BannerAdSizeInfo sizeInfo = new BannerAdSizeInfo(0, 0);
                                         notifyListeners(BannerAdPluginEvents.SizeChanged.getWebEventName(), sizeInfo);
