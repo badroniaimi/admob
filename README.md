@@ -150,22 +150,13 @@ async showConsent() {
 }
 ```
 
-To let users manage their privacy options at any time, show the privacy options form.
-```ts
-import { AdMob } from '@capacitor-community/admob';
-
-showPrivacyOptionsForm() {
-    AdMob.showPrivacyOptionsForm();
-}
-```
-
 If you testing on real device, you have to set `debugGeography` and add your device ID to `testDeviceIdentifiers`. You can find your device ID with logcat (Android) or XCode (iOS).
 
 ```ts
-const consentInfo = await AdMob.requestConsentInfo({
-  debugGeography: AdmobConsentDebugGeography.EEA,
-  testDeviceIdentifiers: ['YOUR_DEVICE_ID'],
-});
+  const consentInfo = await AdMob.requestConsentInfo({
+    debugGeography: AdmobConsentDebugGeography.EEA,
+    testDeviceIdentifiers: ['YOUR_DEVICE_ID']
+  });
 ```
 
 **Note**: When testing, if you choose not consent (Manage -> Confirm Choices). The ads may not load/show. Even on testing enviroment. This is normal. It will work on Production so don't worry.
@@ -175,7 +166,7 @@ const consentInfo = await AdMob.requestConsentInfo({
 1. AdMob.initialize
 2. AdMob.requestConsentInfo
 3. AdMob.showConsentForm (If consent form required )
-   3/ AdMob.showBanner
+3/ AdMob.showBanner
 
 ### Show Banner
 
@@ -183,26 +174,23 @@ const consentInfo = await AdMob.requestConsentInfo({
 import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, BannerAdPluginEvents, AdMobBannerSize } from 'capacitor-badr-admob';
 
 export async function banner(): Promise<void> {
-  AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
-    // Subscribe Banner Event Listener
-  });
+    AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
+      // Subscribe Banner Event Listener
+    });
 
-  AdMob.addListener(
-    BannerAdPluginEvents.SizeChanged,
-    (size: AdMobBannerSize) => {
+    AdMob.addListener(BannerAdPluginEvents.SizeChanged, (size: AdMobBannerSize) => {
       // Subscribe Change Banner Size
-    },
-  );
+    });
 
-  const options: BannerAdOptions = {
-    adId: 'YOUR ADID',
-    adSize: BannerAdSize.BANNER,
-    position: BannerAdPosition.BOTTOM_CENTER,
-    margin: 0,
-    // isTesting: true
-    // npa: true
-  };
-  AdMob.showBanner(options);
+    const options: BannerAdOptions = {
+      adId: 'YOUR ADID',
+      adSize: BannerAdSize.BANNER,
+      position: BannerAdPosition.BOTTOM_CENTER,
+      margin: 0,
+      // isTesting: true
+      // npa: true
+    };
+    AdMob.showBanner(options);
 }
 ```
 
@@ -220,7 +208,6 @@ export async function interstitial(): Promise<void> {
     adId: 'YOUR ADID',
     // isTesting: true
     // npa: true
-    // immersiveMode: true
   };
   await AdMob.prepareInterstitial(options);
   await AdMob.showInterstitial();
@@ -237,19 +224,15 @@ export async function rewardVideo(): Promise<void> {
     // Subscribe prepared rewardVideo
   });
 
-  AdMob.addListener(
-    RewardAdPluginEvents.Rewarded,
-    (rewardItem: AdMobRewardItem) => {
-      // Subscribe user rewarded
-      console.log(rewardItem);
-    },
-  );
+  AdMob.addListener(RewardAdPluginEvents.Rewarded, (rewardItem: AdMobRewardItem) => {
+    // Subscribe user rewarded
+    console.log(rewardItem);
+  });
 
   const options: RewardAdOptions = {
     adId: 'YOUR ADID',
     // isTesting: true
     // npa: true
-    // immersiveMode: true
     // ssv: {
     //   userId: "A user ID to send to your SSV"
     //   customData: JSON.stringify({ ...MyCustomData })
@@ -261,31 +244,27 @@ export async function rewardVideo(): Promise<void> {
 ```
 
 ## Server-side Verification Notice
-
 SSV callbacks are only fired on Production Adverts, therefore test Ads will not fire off your SSV callback.
 
 For E2E tests or just for validating the data in your `RewardAdOptions` work as expected, you can add a custom GET
 request to your mock endpoint after the `RewardAdPluginEvents.Rewarded` similar to this:
-
 ```ts
 AdMob.addListener(RewardAdPluginEvents.Rewarded, async () => {
   // ...
   if (ENVIRONMENT_IS_DEVELOPMENT) {
     try {
-      const url =
-        `https://your-staging-ssv-endpoint` +
-        new URLSearchParams({
-          ad_network: 'TEST',
-          ad_unit: 'TEST',
-          custom_data: customData, // <-- passed CustomData
-          reward_amount: 'TEST',
-          reward_item: 'TEST',
-          timestamp: 'TEST',
-          transaction_id: 'TEST',
-          user_id: userId, // <-- Passed UserID
-          signature: 'TEST',
-          key_id: 'TEST',
-        });
+      const url = `https://your-staging-ssv-endpoint` + new URLSearchParams({
+        'ad_network': 'TEST',
+        'ad_unit': 'TEST',
+        'custom_data': customData, // <-- passed CustomData
+        'reward_amount': 'TEST',
+        'reward_item': 'TEST',
+        'timestamp': 'TEST',
+        'transaction_id': 'TEST',
+        'user_id': userId, // <-- Passed UserID
+        'signature': 'TEST',
+        'key_id': 'TEST'
+      });
       await fetch(url);
     } catch (err) {
       console.error(err);
@@ -295,8 +274,8 @@ AdMob.addListener(RewardAdPluginEvents.Rewarded, async () => {
 });
 ```
 
-## Index
 
+## Index
 <docgen-index>
 
 - [Maintainers](#maintainers)
