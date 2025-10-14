@@ -14,6 +14,7 @@ import com.getcapacitor.community.admob.helpers.AuthorizationStatusEnum;
 import com.getcapacitor.community.admob.interstitial.AdInterstitialExecutor;
 import com.getcapacitor.community.admob.interstitial.InterstitialAdCallbackAndListeners;
 import com.getcapacitor.community.admob.rewarded.AdRewardExecutor;
+import com.getcapacitor.community.admob.rewardedinterstitial.AdRewardInterstitialExecutor;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
@@ -34,6 +35,12 @@ public class AdMob extends Plugin {
         getLogTag()
     );
     private final AdRewardExecutor adRewardExecutor = new AdRewardExecutor(
+        this::getContext,
+        this::getActivity,
+        this::notifyListeners,
+        getLogTag()
+    );
+    private final AdRewardInterstitialExecutor adRewardInterstitialExecutor = new AdRewardInterstitialExecutor(
         this::getContext,
         this::getActivity,
         this::notifyListeners,
@@ -90,6 +97,11 @@ public class AdMob extends Plugin {
     @PluginMethod
     public void requestConsentInfo(final PluginCall call) {
         adConsentExecutor.requestConsentInfo(call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void showPrivacyOptionsForm(final PluginCall call) {
+        adConsentExecutor.showPrivacyOptionsForm(call, this::notifyListeners);
     }
 
     @PluginMethod
@@ -167,6 +179,16 @@ public class AdMob extends Plugin {
     @PluginMethod
     public void showRewardVideoAd(final PluginCall call) {
         adRewardExecutor.showRewardVideoAd(call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void prepareRewardInterstitialAd(final PluginCall call) {
+        adRewardInterstitialExecutor.prepareRewardInterstitialAd(call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void showRewardInterstitialAd(final PluginCall call) {
+        adRewardInterstitialExecutor.showRewardInterstitialAd(call, this::notifyListeners);
     }
 
     /**

@@ -38,18 +38,16 @@ public class AdInterstitialExecutor extends Executor {
         try {
             activitySupplier
                 .get()
-                .runOnUiThread(
-                    () -> {
-                        final AdRequest adRequest = RequestHelper.createRequest(adOptions);
-                        final String id = AdViewIdHelper.getFinalAdId(adOptions, adRequest, logTag, contextSupplier.get());
-                        InterstitialAd.load(
-                            activitySupplier.get(),
-                            id,
-                            adRequest,
-                            adCallbackAndListeners.getInterstitialAdLoadCallback(call, notifyListenersFunction)
-                        );
-                    }
-                );
+                .runOnUiThread(() -> {
+                    final AdRequest adRequest = RequestHelper.createRequest(adOptions);
+                    final String id = AdViewIdHelper.getFinalAdId(adOptions, adRequest, logTag, contextSupplier.get());
+                    InterstitialAd.load(
+                        activitySupplier.get(),
+                        id,
+                        adRequest,
+                        adCallbackAndListeners.getInterstitialAdLoadCallback(call, notifyListenersFunction)
+                    );
+                });
         } catch (Exception ex) {
             call.reject(ex.getLocalizedMessage(), ex);
         }
@@ -57,7 +55,7 @@ public class AdInterstitialExecutor extends Executor {
 
     public void showInterstitial(final PluginCall call, BiConsumer<String, JSObject> notifyListenersFunction) {
         if (interstitialAd == null) {
-            String errorMessage = "No Interstitial can be show. It was not prepared or maybe it failed to be prepared.";
+            String errorMessage = "No Interstitial can be shown. It was not prepared or maybe it failed to be prepared.";
             call.reject(errorMessage);
             AdMobPluginError errorObject = new AdMobPluginError(-1, errorMessage);
             notifyListenersFunction.accept(InterstitialAdPluginPluginEvent.FailedToLoad, errorObject);
@@ -66,15 +64,13 @@ public class AdInterstitialExecutor extends Executor {
 
         activitySupplier
             .get()
-            .runOnUiThread(
-                () -> {
-                    try {
-                        interstitialAd.show(activitySupplier.get());
-                        call.resolve();
-                    } catch (Exception ex) {
-                        call.reject(ex.getLocalizedMessage(), ex);
-                    }
+            .runOnUiThread(() -> {
+                try {
+                    interstitialAd.show(activitySupplier.get());
+                    call.resolve();
+                } catch (Exception ex) {
+                    call.reject(ex.getLocalizedMessage(), ex);
                 }
-            );
+            });
     }
 }

@@ -8,6 +8,7 @@ import type {
   AdmobConsentRequestOptions,
 } from '.';
 import { AdmobConsentStatus } from './consent/consent-status.enum';
+import { PrivacyOptionsRequirementStatus } from './consent/privacy-options-requirement-status.enum';
 import type { AdMobRewardItem } from './reward';
 import type { AdOptions, AdLoadInfo } from './shared';
 import type { TrackingAuthorizationStatusInterface } from './shared/tracking-authorization-status.interface';
@@ -27,20 +28,26 @@ export class AdMobWeb extends WebPlugin implements AdMobPlugin {
     };
   }
 
-  async requestConsentInfo(
-    options?: AdmobConsentRequestOptions,
-  ): Promise<AdmobConsentInfo> {
+  async requestConsentInfo(options?: AdmobConsentRequestOptions): Promise<AdmobConsentInfo> {
     console.log('requestConsentInfo', options);
     return {
       status: AdmobConsentStatus.REQUIRED,
       isConsentFormAvailable: true,
+      canRequestAds: true,
+      privacyOptionsRequirementStatus: PrivacyOptionsRequirementStatus.REQUIRED,
     };
+  }
+
+  async showPrivacyOptionsForm(): Promise<void> {
+    console.log('showPrivacyOptionsForm');
   }
 
   async showConsentForm(): Promise<AdmobConsentInfo> {
     console.log('showConsentForm');
     return {
       status: AdmobConsentStatus.REQUIRED,
+      canRequestAds: true,
+      privacyOptionsRequirementStatus: PrivacyOptionsRequirementStatus.REQUIRED,
     };
   }
 
@@ -94,6 +101,20 @@ export class AdMobWeb extends WebPlugin implements AdMobPlugin {
   }
 
   async showRewardVideoAd(): Promise<AdMobRewardItem> {
+    return {
+      type: '',
+      amount: 0,
+    };
+  }
+
+  async prepareRewardInterstitialAd(options: AdOptions): Promise<AdLoadInfo> {
+    console.log(options);
+    return {
+      adUnitId: options.adId,
+    };
+  }
+
+  async showRewardInterstitialAd(): Promise<AdMobRewardItem> {
     return {
       type: '',
       amount: 0,
