@@ -13,22 +13,57 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "trackingAuthorizationStatus", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestConsentInfo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "showPrivacyOptionsForm", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestTrackingAuthorization", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showConsentForm", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "resetConsentInfo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setApplicationMuted", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setApplicationVolume", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getAdaptiveBannerSize", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getBannerSize", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "prepareBanner", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showBanner", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "resumeBanner", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "hideBanner", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeBanner", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startNativeAdFeed", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "destroyNativeAdFeed", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "loadNativeAd", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateNativeAdPlacements", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "removeNativeAd", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "prepareInterstitial", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showInterstitial", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "prepareRewardVideoAd", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showRewardVideoAd", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "prepareRewardInterstitialAd", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "showRewardInterstitialAd", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "showRewardInterstitialAd", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "loadAppOpen", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "showAppOpen", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isAppOpenLoaded", returnType: CAPPluginReturnPromise)
     ]
+    private let appOpenAdPlugin = AppOpenAdPlugin()
+    @objc func loadAppOpen(_ call: CAPPluginCall) {
+        appOpenAdPlugin.loadAppOpen(
+            call,
+            notify: { [weak self] eventName, data in
+                self?.notifyListeners(eventName, data: data)
+            }
+        )
+    }
+
+    @objc func showAppOpen(_ call: CAPPluginCall) {
+        appOpenAdPlugin.showAppOpen(
+            call,
+            getRootViewController: self.getRootVC,
+            notify: { [weak self] eventName, data in
+                self?.notifyListeners(eventName, data: data)
+            }
+        )
+    }
+
+    @objc func isAppOpenLoaded(_ call: CAPPluginCall) {
+        appOpenAdPlugin.isAppOpenLoaded(call)
+    }
 
     var testingDevices: [String] = []
 
@@ -37,22 +72,41 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
     private let adRewardExecutor = AdRewardExecutor()
     private let adRewardInterstitialExecutor = AdRewardInterstitialExecutor()
     private let consentExecutor = ConsentExecutor()
+    private let nativeAdExecutor = NativeAdExecutor()
 
-    /**
-     * Enable SKAdNetwork to track conversions
-     * https://developers.google.com/admob/ios/ios14
-     */
-    @objc func initialize(_ call: CAPPluginCall) {
-        self.bannerExecutor.plugin = self
-        self.adInterstitialExecutor.plugin = self
-        self.adRewardExecutor.plugin = self
-        self.adRewardInterstitialExecutor.plugin = self
-        self.adInterstitialExecutor.plugin = self
+    public override func load() {
         self.consentExecutor.plugin = self
-        self.setRequestConfiguration(call)
+        self.bannerExecutor.plugin = self
+    }
 
-        MobileAds.shared.start(completionHandler: nil)
-        call.resolve([:])
+    /// Full-screen ads that currently have web media suspended.
+    private var webMediaSuspenders = Set<ObjectIdentifier>()
+
+    /// Pauses all web media while a full-screen ad is up, so WebKit releases its audio before the ad plays
+    /// and sets it up again afterwards, instead of leaving web audio silent until the app restarts.
+    func suspendWebMedia(for owner: AnyObject) {
+        Task { @MainActor [weak self] in
+            guard let self, self.webMediaSuspenders.insert(ObjectIdentifier(owner)).inserted,
+                self.webMediaSuspenders.count == 1
+            else { return }
+            self.setWebMediaPlaybackSuspended(true)
+        }
+    }
+
+    /// Only resumes once every ad that suspended has resumed, so a failed present (which can arrive
+    /// without a preceding adWillPresentFullScreenContent) can't release another ad's suspension.
+    func resumeWebMedia(for owner: AnyObject) {
+        Task { @MainActor [weak self] in
+            guard let self, self.webMediaSuspenders.remove(ObjectIdentifier(owner)) != nil,
+                self.webMediaSuspenders.isEmpty
+            else { return }
+            self.setWebMediaPlaybackSuspended(false)
+        }
+    }
+
+    @MainActor
+    func setWebMediaPlaybackSuspended(_ suspended: Bool) {
+        self.bridge?.webView?.setAllMediaPlaybackSuspended(suspended, completionHandler: nil)
     }
 
     /**
@@ -96,34 +150,12 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
-    /**
-     *  AdMob: Banner
-     *  https://developers.google.com/ad-manager/mobile-ads-sdk/ios/banner?hl=ja
-     */
-    @objc func showBanner(_ call: CAPPluginCall) {
-        let adUnitID = getAdId(call, "ca-app-pub-3940256099942544/6300978111")
-        let request = self.GADRequestWithOption(call.getBool("npa") ?? false)
-
-        DispatchQueue.main.async {
-            self.bannerExecutor.showBanner(call, request, adUnitID)
-        }
-    }
-
-    @objc func hideBanner(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            self.bannerExecutor.hideBanner(call)
-        }
-    }
-
-    @objc func resumeBanner(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            self.bannerExecutor.resumeBanner(call)
-        }
-    }
-
-    @objc func removeBanner(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            self.bannerExecutor.removeBanner(call)
+    deinit {
+        let executor = nativeAdExecutor
+        if Thread.isMainThread {
+            executor.destroyAll()
+        } else {
+            DispatchQueue.main.async { executor.destroyAll() }
         }
     }
 
@@ -190,16 +222,12 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
                 switch ATTrackingManager.trackingAuthorizationStatus {
                 case .authorized:
                     call.resolve(["status": AuthorizationStatusEnum.Authorized.rawValue])
-                    break
                 case .denied:
                     call.resolve(["status": AuthorizationStatusEnum.Denied.rawValue])
-                    break
                 case .restricted:
                     call.resolve(["status": AuthorizationStatusEnum.Restricted.rawValue])
-                    break
                 case .notDetermined:
                     call.resolve(["status": AuthorizationStatusEnum.NotDetermined.rawValue])
-                    break
                 @unknown default:
                     call.reject("trackingAuthorizationStatus can't get status")
                 }
@@ -239,6 +267,12 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    @objc func showPrivacyOptionsForm(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.consentExecutor.showPrivacyOptionsForm(call)
+        }
+    }
+
     @objc func resetConsentInfo(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             self.consentExecutor.resetConsentInfo(call)
@@ -275,12 +309,12 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
             MobileAds.shared.requestConfiguration.testDeviceIdentifiers = call.getArray("testingDevices", String.self) ?? []
         }
 
-        if call.getBool("tagForChildDirectedTreatment") == true {
-            MobileAds.shared.requestConfiguration.tagForChildDirectedTreatment = true
+        if let value = call.getBool("tagForChildDirectedTreatment") {
+            MobileAds.shared.requestConfiguration.tagForChildDirectedTreatment = NSNumber(value: value)
         }
 
-        if call.getBool("tagForUnderAgeOfConsent") == true {
-            MobileAds.shared.requestConfiguration.tagForUnderAgeOfConsent = true
+        if let value = call.getBool("tagForUnderAgeOfConsent") {
+            MobileAds.shared.requestConfiguration.tagForUnderAgeOfConsent = NSNumber(value: value)
         }
 
         if call.getString("maxAdContentRating") != nil {
@@ -315,5 +349,83 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
             }
         }
         return window?.rootViewController
+    }
+}
+
+extension AdMobPlugin {
+    // MARK: SDK initialization
+
+    @objc func initialize(_ call: CAPPluginCall) {
+        adInterstitialExecutor.plugin = self
+        adRewardExecutor.plugin = self
+        adRewardInterstitialExecutor.plugin = self
+        adInterstitialExecutor.plugin = self
+        nativeAdExecutor.plugin = self
+        setRequestConfiguration(call)
+
+        MobileAds.shared.start { _ in
+            call.resolve([:])
+        }
+    }
+
+    // MARK: Banner ads
+
+    @objc func getAdaptiveBannerSize(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.bannerExecutor.getAdaptiveBannerSize(call) }
+    }
+
+    @objc func getBannerSize(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.bannerExecutor.getBannerSize(call) }
+    }
+
+    @objc func prepareBanner(_ call: CAPPluginCall) {
+        let adUnitID = getAdId(call, "ca-app-pub-3940256099942544/6300978111")
+        let request = GADRequestWithOption(call.getBool("npa") ?? false)
+        DispatchQueue.main.async { self.bannerExecutor.prepareBanner(call, request, adUnitID) }
+    }
+
+    @objc func showBanner(_ call: CAPPluginCall) {
+        let adUnitID = getAdId(call, "ca-app-pub-3940256099942544/6300978111")
+        let request = GADRequestWithOption(call.getBool("npa") ?? false)
+        DispatchQueue.main.async {
+            self.bannerExecutor.showBanner(call, request, adUnitID)
+        }
+    }
+
+    @objc func hideBanner(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.bannerExecutor.hideBanner(call) }
+    }
+
+    @objc func resumeBanner(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.bannerExecutor.resumeBanner(call) }
+    }
+
+    @objc func removeBanner(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.bannerExecutor.removeBanner(call) }
+    }
+
+    // MARK: Native ads research preview
+
+    @objc func startNativeAdFeed(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.nativeAdExecutor.startFeed(call) }
+    }
+
+    @objc func destroyNativeAdFeed(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.nativeAdExecutor.destroyFeed(call) }
+    }
+
+    @objc func loadNativeAd(_ call: CAPPluginCall) {
+        let request = GADRequestWithOption(call.getBool("npa") ?? false)
+        DispatchQueue.main.async {
+            self.nativeAdExecutor.load(call, request: request)
+        }
+    }
+
+    @objc func updateNativeAdPlacements(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.nativeAdExecutor.updatePlacements(call) }
+    }
+
+    @objc func removeNativeAd(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { self.nativeAdExecutor.remove(call) }
     }
 }

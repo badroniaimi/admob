@@ -3,7 +3,9 @@ package com.getcapacitor.community.admob.interstitial
 import com.getcapacitor.JSObject
 import com.getcapacitor.PluginCall
 import com.getcapacitor.community.admob.helpers.FullscreenPluginCallback
+import com.getcapacitor.community.admob.helpers.AdExpiration
 import com.getcapacitor.community.admob.models.AdMobPluginError
+import com.getcapacitor.community.admob.models.AdMobRevenueData
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
@@ -16,9 +18,21 @@ object InterstitialAdCallbackAndListeners {
     ): InterstitialAdLoadCallback {
         return object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(ad: InterstitialAd) {
+                val immersiveMode = call.getBoolean("immersiveMode")
                 ad.fullScreenContentCallback = FullscreenPluginCallback(InterstitialAdPluginPluginEvent, notifyListenersFunction)
+                ad.setImmersiveMode(immersiveMode ?: false)
 
-                AdInterstitialExecutor.interstitialAd = ad
+                ad.setOnPaidEventListener { adValue ->
+                    val responseInfo = ad.responseInfo
+                    val networkName = responseInfo?.mediationAdapterClassName ?: ""
+                    val impressionId = responseInfo?.responseId ?: ""
+                    val revenueData = AdMobRevenueData(adValue, ad.adUnitId, networkName, impressionId)
+                    notifyListenersFunction.accept(InterstitialAdPluginPluginEvent.AdImpression, revenueData)
+                }
+
+                AdInterstitialExecutor.preparedAds[ad.adUnitId] = ad
+                AdInterstitialExecutor.preparedAdExpirations[ad.adUnitId] = AdExpiration(3600)
+                AdInterstitialExecutor.lastPreparedAdId = ad.adUnitId
 
                 val adInfo = JSObject()
                 adInfo.put("adUnitId", ad.adUnitId)
@@ -31,7 +45,7 @@ object InterstitialAdCallbackAndListeners {
                 val adMobError = AdMobPluginError(adError)
 
                 notifyListenersFunction.accept(InterstitialAdPluginPluginEvent.FailedToLoad, adMobError)
-                call.reject(adError.message)
+                call.reject(adError.message, adError.code.toString())
             }
         }
     }

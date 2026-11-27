@@ -1,7 +1,7 @@
 import type { PluginListenerHandle } from '@capacitor/core';
 
 import type { ValidateAllEventsEnumAreImplemented } from '../private/validate-all-events-implemented.type';
-import type { AdMobError } from '../shared';
+import type { AdMobError, AdMobRevenueData } from '../shared';
 
 import type { BannerAdOptions } from './banner-ad-options.interface';
 import type { BannerAdPluginEvents } from './banner-ad-plugin-events.enum';
@@ -15,7 +15,7 @@ export type BannerDefinitionsHasAllEvents = ValidateAllEventsEnumAreImplemented<
 
 export interface BannerDefinitions {
   /**
-   * Show a banner Ad
+   * Displays a banner ad.
    *
    * @group Banner
    * @param options AdOptions
@@ -24,7 +24,7 @@ export interface BannerDefinitions {
   showBanner(options: BannerAdOptions): Promise<void>;
 
   /**
-   * Hide the banner, remove it from screen, but can show it later
+   * Hides the current banner without destroying it.
    *
    * @group Banner
    * @since 1.1.2
@@ -32,7 +32,7 @@ export interface BannerDefinitions {
   hideBanner(): Promise<void>;
 
   /**
-   * Resume the banner, show it after hide
+   * Shows a previously hidden banner.
    *
    * @group Banner
    * @since 1.1.2
@@ -40,7 +40,7 @@ export interface BannerDefinitions {
   resumeBanner(): Promise<void>;
 
   /**
-   * Destroy the banner, remove it from screen.
+   * Destroys the current banner and removes it from the screen.
    *
    * @group Banner
    * @since 1.1.2
@@ -48,6 +48,35 @@ export interface BannerDefinitions {
   removeBanner(): Promise<void>;
 
   /**
+   * Preloads the next banner without changing the current display.
+   * Resolves when loaded. Call showBanner() with matching options to display it.
+   * Preparing again replaces the previous preparation; removeBanner() cancels it.
+   *
+   * @group Banner
+   */
+  prepareBanner(options: BannerAdOptions): Promise<void>;
+
+  /**
+   * Calculates the anchored adaptive banner size without creating or loading an ad.
+   * Uses the current safe-area-aware available width unless a width is provided.
+   * Dimensions are dp on Android and points on iOS. Recalculate after rotation
+   * or available-width changes. An explicit width does not resize showBanner().
+   *
+   * @group Banner
+   */
+  getAdaptiveBannerSize(options?: { width?: number }): Promise<AdMobBannerSize>;
+
+  /**
+   * Returns the currently displayed banner size in dp (Android) or points (iOS).
+   * Returns zero dimensions before loading or while hidden, removed, or failed.
+   * Does not create, load, or show an ad.
+   *
+   * @group Banner
+   */
+  getBannerSize(): Promise<AdMobBannerSize>;
+
+  /**
+   * Listens for changes to the displayed banner dimensions.
    *
    * @group Banner
    * @param eventName bannerAdSizeChanged
@@ -60,7 +89,7 @@ export interface BannerDefinitions {
   ): Promise<PluginListenerHandle>;
 
   /**
-   * Notice: request loaded Banner ad
+   * Listens for banner ad load events.
    *
    * @group Banner
    * @param eventName bannerAdLoaded
@@ -73,7 +102,7 @@ export interface BannerDefinitions {
   ): Promise<PluginListenerHandle>;
 
   /**
-   * Notice: request failed Banner ad
+   * Listens for banner ad load failures.
    *
    * @group Banner
    * @param eventName bannerAdFailedToLoad
@@ -86,7 +115,7 @@ export interface BannerDefinitions {
   ): Promise<PluginListenerHandle>;
 
   /**
-   * Notice: full-screen banner view will be presented in response to the user clicking on an ad.
+   * Listens for banner overlay opened events.
    *
    * @group Banner
    * @param eventName bannerAdOpened
@@ -99,7 +128,7 @@ export interface BannerDefinitions {
   ): Promise<PluginListenerHandle>;
 
   /**
-   * Notice: The full-screen banner view will been dismissed.
+   * Listens for banner overlay closed events.
    *
    * @group Banner
    * @param eventName bannerAdClosed
@@ -112,7 +141,7 @@ export interface BannerDefinitions {
   ): Promise<PluginListenerHandle>;
 
   /**
-   * Unimplemented
+   * Listens for banner impression events.
    *
    * @group Banner
    * @param eventName AdImpression
@@ -122,5 +151,15 @@ export interface BannerDefinitions {
   addListener(
     eventName: BannerAdPluginEvents.AdImpression,
     listenerFunc: () => void,
+  ): Promise<PluginListenerHandle>;
+
+  /**
+   * Listens for banner impression-level ad revenue events.
+   *
+   * @group Banner
+   */
+  addListener(
+    eventName: BannerAdPluginEvents.AdPaid,
+    listenerFunc: (data: AdMobRevenueData) => void,
   ): Promise<PluginListenerHandle>;
 }

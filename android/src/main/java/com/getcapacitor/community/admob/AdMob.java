@@ -1,6 +1,9 @@
 package com.getcapacitor.community.admob;
 
 import android.Manifest;
+import android.app.Activity;
+import android.os.Handler;
+import android.os.Looper;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -8,11 +11,13 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.community.admob.appopen.AppOpenAdPlugin;
 import com.getcapacitor.community.admob.banner.BannerExecutor;
 import com.getcapacitor.community.admob.consent.AdConsentExecutor;
 import com.getcapacitor.community.admob.helpers.AuthorizationStatusEnum;
 import com.getcapacitor.community.admob.interstitial.AdInterstitialExecutor;
 import com.getcapacitor.community.admob.interstitial.InterstitialAdCallbackAndListeners;
+import com.getcapacitor.community.admob.nativeads.NativeAdExecutor;
 import com.getcapacitor.community.admob.rewarded.AdRewardExecutor;
 import com.getcapacitor.community.admob.rewardedinterstitial.AdRewardInterstitialExecutor;
 import com.google.android.gms.ads.MobileAds;
@@ -34,18 +39,21 @@ public class AdMob extends Plugin {
         this::notifyListeners,
         getLogTag()
     );
+
     private final AdRewardExecutor adRewardExecutor = new AdRewardExecutor(
         this::getContext,
         this::getActivity,
         this::notifyListeners,
         getLogTag()
     );
+
     private final AdRewardInterstitialExecutor adRewardInterstitialExecutor = new AdRewardInterstitialExecutor(
         this::getContext,
         this::getActivity,
         this::notifyListeners,
         getLogTag()
     );
+
     private final AdInterstitialExecutor adInterstitialExecutor = new AdInterstitialExecutor(
         this::getContext,
         this::getActivity,
@@ -61,23 +69,109 @@ public class AdMob extends Plugin {
         getLogTag()
     );
 
-    // Initialize AdMob with appId
+    private final AppOpenAdPlugin appOpenAdPlugin = new AppOpenAdPlugin();
+
+    private final NativeAdExecutor nativeAdExecutor = new NativeAdExecutor(
+        this::getContext,
+        this::getActivity,
+        () -> getBridge().getWebView(),
+        this::notifyListeners,
+        getLogTag()
+    );
+
+    private boolean nativeAdPlacementChannelRegistered;
+
+    @Override
+    public void load() {
+        super.load();
+        try {
+            // Use the running bridge configuration, including programmatic server settings.
+            String appUrl = getBridge().getServerUrl();
+            if (appUrl == null) appUrl = getBridge().getLocalUrl();
+            String origin = android.net.Uri.parse(appUrl).buildUpon().path(null).fragment(null).clearQuery().build().toString();
+            io.github.webview_native_ui.engine.NativeUIProjection.install(
+                getBridge().getWebView(),
+                java.util.Collections.singleton(origin)
+            );
+        } catch (Exception error) {
+            android.util.Log.w(getLogTag(), "Native UI channel unavailable; retaining native tracking", error);
+        }
+        if (
+            androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.WEB_MESSAGE_LISTENER) &&
+            !getBridge().getConfig().isUsingLegacyBridge()
+        ) {
+            try {
+                androidx.webkit.WebViewCompat.addWebMessageListener(
+                    getBridge().getWebView(),
+                    "capacitorAdMobPlacements",
+                    getBridge().getAllowedOriginRules(),
+                    (view, message, origin, mainFrame, reply) -> {
+                        if (mainFrame) nativeAdExecutor.updateDirectPlacements(message.getData());
+                    }
+                );
+                nativeAdPlacementChannelRegistered = true;
+            } catch (RuntimeException ignored) {
+                // Placement updates retain the regular Capacitor bridge as a fallback.
+            }
+        }
+    }
+
+    @PluginMethod
+    public void loadAppOpen(final PluginCall call) {
+        appOpenAdPlugin.loadAppOpen(getContext(), getActivity(), call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void showAppOpen(final PluginCall call) {
+        appOpenAdPlugin.showAppOpen(getActivity(), call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void isAppOpenLoaded(final PluginCall call) {
+        appOpenAdPlugin.isAppOpenLoaded(getActivity(), call);
+    }
+
+    // ---------------------------------------------------------
+    // MAIN METHODS
+    // ---------------------------------------------------------
+
     @PluginMethod
     public void initialize(final PluginCall call) {
         this.setRequestConfiguration(call);
 
-        try {
-            MobileAds.initialize(
-                getContext(),
-                new OnInitializationCompleteListener() {
-                    @Override
-                    public void onInitializationComplete(InitializationStatus initializationStatus) {}
-                }
-            );
-            bannerExecutor.initialize();
-            call.resolve();
-        } catch (Exception ex) {
-            call.reject(ex.getLocalizedMessage(), ex);
+        // Same as banner/interstitial: bridge thread is not the UI thread — MobileAds + view setup must run on main.
+        runOnMainThread(() -> {
+            try {
+                MobileAds.initialize(
+                    getContext(),
+                    new OnInitializationCompleteListener() {
+                        @Override
+                        public void onInitializationComplete(InitializationStatus initializationStatus) {
+                            // SDK initialization and the banner parent must both be ready. See #39 and #451.
+                            runOnMainThread(() -> {
+                                bannerExecutor.awaitViewGroup((found) -> {
+                                    if (found) {
+                                        call.resolve();
+                                    } else {
+                                        call.reject("AdMob initialized, but the banner parent view never appeared");
+                                    }
+                                });
+                            });
+                        }
+                    }
+                );
+            } catch (Exception ex) {
+                call.reject(ex.getLocalizedMessage(), ex);
+            }
+        });
+    }
+
+    private void runOnMainThread(Runnable action) {
+        Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(action);
+        } else {
+            new Handler(Looper.getMainLooper()).post(action);
         }
     }
 
@@ -93,10 +187,18 @@ public class AdMob extends Plugin {
         call.resolve(response);
     }
 
-    // User Consent
+    // ---------------------------------------------------------
+    // USER CONSENT
+    // ---------------------------------------------------------
+
     @PluginMethod
     public void requestConsentInfo(final PluginCall call) {
         adConsentExecutor.requestConsentInfo(call, this::notifyListeners);
+    }
+
+    @PluginMethod
+    public void showPrivacyOptionsForm(final PluginCall call) {
+        adConsentExecutor.showPrivacyOptionsForm(call, this::notifyListeners);
     }
 
     @PluginMethod
@@ -108,6 +210,10 @@ public class AdMob extends Plugin {
     public void resetConsentInfo(final PluginCall call) {
         adConsentExecutor.resetConsentInfo(call, this::notifyListeners);
     }
+
+    // ---------------------------------------------------------
+    // APP SETTINGS
+    // ---------------------------------------------------------
 
     @PluginMethod
     public void setApplicationMuted(final PluginCall call) {
@@ -131,40 +237,104 @@ public class AdMob extends Plugin {
         call.resolve();
     }
 
-    // Show a banner Ad
+    // ---------------------------------------------------------
+    // BANNER ADS
+    // ---------------------------------------------------------
+
     @PluginMethod
-    public void showBanner(final PluginCall call) {
-        bannerExecutor.showBanner(call);
+    public void getAdaptiveBannerSize(final PluginCall call) {
+        bannerExecutor.getAdaptiveBannerSize(call);
     }
 
-    // Hide the banner, remove it from screen, but can show it later
+    @PluginMethod
+    public void getBannerSize(final PluginCall call) {
+        bannerExecutor.getBannerSize(call);
+    }
+
+    @PluginMethod
+    public void prepareBanner(final PluginCall call) {
+        bannerExecutor.prepareBanner(call);
+    }
+
+    @PluginMethod
+    public void showBanner(final PluginCall call) {
+        boolean systemBarsHandlesInsets = !"disable".equals(
+            getBridge().getConfig().getPluginConfiguration("SystemBars").getString("insetsHandling", "css")
+        );
+        bannerExecutor.showBanner(call, systemBarsHandlesInsets);
+    }
+
     @PluginMethod
     public void hideBanner(final PluginCall call) {
         bannerExecutor.hideBanner(call);
     }
 
-    // Resume the banner, show it after hide
     @PluginMethod
     public void resumeBanner(final PluginCall call) {
         bannerExecutor.resumeBanner(call);
     }
 
-    // Destroy the banner, remove it from screen.
     @PluginMethod
     public void removeBanner(final PluginCall call) {
         bannerExecutor.removeBanner(call);
     }
+
+    // ---------------------------------------------------------
+    // NATIVE ADS
+    // ---------------------------------------------------------
+
+    @PluginMethod
+    public void startNativeAdFeed(final PluginCall call) {
+        nativeAdExecutor.startFeed(call);
+    }
+
+    @PluginMethod
+    public void destroyNativeAdFeed(final PluginCall call) {
+        nativeAdExecutor.destroyFeed(call);
+    }
+
+    @PluginMethod
+    public void loadNativeAd(final PluginCall call) {
+        nativeAdExecutor.load(call);
+    }
+
+    @PluginMethod
+    public void updateNativeAdPlacements(final PluginCall call) {
+        nativeAdExecutor.updatePlacements(call);
+    }
+
+    @PluginMethod
+    public void removeNativeAd(final PluginCall call) {
+        nativeAdExecutor.remove(call);
+    }
+
+    @PluginMethod
+    public void captureNativeAdSnapshot(final PluginCall call) {
+        nativeAdExecutor.captureSnapshot(call);
+    }
+
+    @PluginMethod
+    public void prepareNativeAdSnapshot(final PluginCall call) {
+        nativeAdExecutor.prepareSnapshot(call);
+    }
+
+    // ---------------------------------------------------------
+    // INTERSTITIAL ADS
+    // ---------------------------------------------------------
 
     @PluginMethod
     public void prepareInterstitial(final PluginCall call) {
         adInterstitialExecutor.prepareInterstitial(call, this::notifyListeners);
     }
 
-    // Show interstitial Ad
     @PluginMethod
     public void showInterstitial(final PluginCall call) {
         adInterstitialExecutor.showInterstitial(call, this::notifyListeners);
     }
+
+    // ---------------------------------------------------------
+    // REWARDED ADS
+    // ---------------------------------------------------------
 
     @PluginMethod
     public void prepareRewardVideoAd(final PluginCall call) {
@@ -186,10 +356,10 @@ public class AdMob extends Plugin {
         adRewardInterstitialExecutor.showRewardInterstitialAd(call, this::notifyListeners);
     }
 
-    /**
-     * @see <a href="https://developers.google.com/admob/android/test-ads#enable_test_devices">Test Devices</a>
-     * @see <a href="https://developers.google.com/admob/android/targeting">Target Settings</a>
-     */
+    // ---------------------------------------------------------
+    // REQUEST CONFIGURATION
+    // ---------------------------------------------------------
+
     private void setRequestConfiguration(final PluginCall call) {
         // Testing Devices
         final boolean initializeForTesting = call.getBoolean("initializeForTesting", false);
@@ -253,5 +423,15 @@ public class AdMob extends Plugin {
         } catch (JSONException error) {
             call.reject(error.toString());
         }
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        if (nativeAdPlacementChannelRegistered) {
+            androidx.webkit.WebViewCompat.removeWebMessageListener(getBridge().getWebView(), "capacitorAdMobPlacements");
+            nativeAdPlacementChannelRegistered = false;
+        }
+        nativeAdExecutor.destroyAll();
+        super.handleOnDestroy();
     }
 }

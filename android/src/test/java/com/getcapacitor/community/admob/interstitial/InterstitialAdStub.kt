@@ -8,7 +8,9 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 
 internal class InterstitialAdStub: InterstitialAd() {
 
-     private var fullScreenContentCallback: FullScreenContentCallback? = null
+    private var immersiveMode = false;
+    private var fullScreenContentCallback: FullScreenContentCallback? = null
+    private var onPaidEventListener: OnPaidEventListener? = null
 
     override fun getAdUnitId(): String {
         return "adUnit"
@@ -27,7 +29,7 @@ internal class InterstitialAdStub: InterstitialAd() {
     }
 
     override fun setImmersiveMode(p0: Boolean) {
-        TODO("Not yet implemented")
+        immersiveMode = p0
     }
 
     override fun getResponseInfo(): ResponseInfo {
@@ -35,10 +37,18 @@ internal class InterstitialAdStub: InterstitialAd() {
     }
 
     override fun setOnPaidEventListener(p0: OnPaidEventListener?) {
-        TODO("Not yet implemented")
+        onPaidEventListener = p0
     }
 
     override fun getOnPaidEventListener(): OnPaidEventListener? {
+        return onPaidEventListener
+    }
+
+    override fun getPlacementId(): Long {
+        return 0L
+    }
+
+    override fun setPlacementId(p0: Long) {
         TODO("Not yet implemented")
     }
 

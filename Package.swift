@@ -3,25 +3,30 @@ import PackageDescription
 
 let package = Package(
     name: "CapacitorCommunityAdmob",
-    platforms: [.iOS(.v14)],
+    platforms: [.iOS(.v15)],
     products: [
         .library(
             name: "CapacitorCommunityAdmob",
             targets: ["AdMobPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "7.0.0"),
-        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "12.7.0")
+        .package(url: "https://github.com/webview-native-ui/engine.git", from: "1.0.10"),
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0"),
+        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "13.11.0"),
+        .package(url: "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git", .upToNextMinor(from: "3.1.0"))
     ],
     targets: [
         .target(
             name: "AdMobPlugin",
             dependencies: [
+                .product(name: "WebViewNativeUIEngine", package: "engine"),
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads")
+                .product(name: "GoogleMobileAds", package: "swift-package-manager-google-mobile-ads"),
+                .product(name: "GoogleUserMessagingPlatform", package: "swift-package-manager-google-user-messaging-platform")
             ],
-            path: "ios/Sources/AdMobPlugin"),
+            path: "ios/Sources/AdMobPlugin",
+            resources: [.copy("PrivacyInfo.xcprivacy")]),
         .testTarget(
             name: "AdMobPluginTests",
             dependencies: ["AdMobPlugin"],

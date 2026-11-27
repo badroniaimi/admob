@@ -8,16 +8,21 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.community.admob.helpers.AdViewIdHelper;
 import com.getcapacitor.community.admob.helpers.RequestHelper;
+import com.getcapacitor.community.admob.helpers.RewardedAdShowCallback;
 import com.getcapacitor.community.admob.models.AdMobPluginError;
 import com.getcapacitor.community.admob.models.AdOptions;
 import com.getcapacitor.community.admob.models.Executor;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.common.util.BiConsumer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AdRewardExecutor extends Executor {
 
-    public static RewardedAd mRewardedAd;
+    public static final Map<String, RewardedAd> preparedAds = new LinkedHashMap<>();
+    public static String lastPreparedAdId;
+    private boolean showing;
 
     public AdRewardExecutor(
         Supplier<Context> contextSupplier,
@@ -32,28 +37,30 @@ public class AdRewardExecutor extends Executor {
     public void prepareRewardVideoAd(final PluginCall call, BiConsumer<String, JSObject> notifyListenersFunction) {
         final AdOptions adOptions = AdOptions.getFactory().createRewardVideoOptions(call);
 
-        activitySupplier
-            .get()
-            .runOnUiThread(() -> {
-                try {
-                    final AdRequest adRequest = RequestHelper.createRequest(adOptions);
-                    final String id = AdViewIdHelper.getFinalAdId(adOptions, adRequest, logTag, contextSupplier.get());
-                    RewardedAd.load(
-                        contextSupplier.get(),
-                        id,
-                        adRequest,
-                        RewardedAdCallbackAndListeners.INSTANCE.getRewardedAdLoadCallback(call, notifyListenersFunction, adOptions)
-                    );
-                } catch (Exception ex) {
-                    call.reject(ex.getLocalizedMessage(), ex);
-                }
-            });
+        activitySupplier.get().runOnUiThread(() -> {
+            try {
+                final AdRequest adRequest = RequestHelper.createRequest(adOptions);
+                final String id = AdViewIdHelper.getFinalAdId(adOptions, adRequest, logTag, contextSupplier.get());
+                RewardedAd.load(
+                    contextSupplier.get(),
+                    id,
+                    adRequest,
+                    RewardedAdCallbackAndListeners.INSTANCE.getRewardedAdLoadCallback(call, notifyListenersFunction, adOptions)
+                );
+            } catch (Exception ex) {
+                call.reject(ex.getLocalizedMessage(), ex);
+            }
+        });
     }
 
     @PluginMethod
     public void showRewardVideoAd(final PluginCall call, BiConsumer<String, JSObject> notifyListenersFunction) {
-        if (mRewardedAd == null) {
-            String errorMessage = "No Reward Video Ad can be show. It was not prepared or maybe it failed to be prepared.";
+        String requestedAdId = call.getString("adId");
+        String adId = requestedAdId != null ? requestedAdId : lastPreparedAdId;
+        RewardedAd ad = adId != null ? preparedAds.get(adId) : null;
+
+        if (ad == null) {
+            String errorMessage = "No Reward Video Ad can be shown. It was not prepared or maybe it failed to be prepared.";
             call.reject(errorMessage);
             AdMobPluginError errorObject = new AdMobPluginError(-1, errorMessage);
             notifyListenersFunction.accept(RewardAdPluginEvents.FailedToLoad, errorObject);
@@ -61,14 +68,37 @@ public class AdRewardExecutor extends Executor {
         }
 
         try {
-            activitySupplier
-                .get()
-                .runOnUiThread(() -> {
-                    mRewardedAd.show(
-                        activitySupplier.get(),
-                        RewardedAdCallbackAndListeners.INSTANCE.getOnUserEarnedRewardListener(call, notifyListenersFunction)
-                    );
-                });
+            activitySupplier.get().runOnUiThread(() -> {
+                if (showing) {
+                    call.reject("An ad is already showing", "REWARDED_AD_ALREADY_SHOWING");
+                    return;
+                }
+                if (preparedAds.get(adId) != ad) {
+                    call.reject("Rewarded ad is no longer ready");
+                    return;
+                }
+                showing = true;
+                RewardedAdShowCallback callback = new RewardedAdShowCallback(
+                    call,
+                    RewardAdPluginEvents.INSTANCE,
+                    RewardAdPluginEvents.Rewarded,
+                    notifyListenersFunction,
+                    () -> {
+                        showing = false;
+                        preparedAds.remove(adId, ad);
+                        if (!preparedAds.containsKey(lastPreparedAdId)) {
+                            lastPreparedAdId = null;
+                            for (String remainingAdId : preparedAds.keySet()) lastPreparedAdId = remainingAdId;
+                        }
+                    }
+                );
+                try {
+                    ad.setFullScreenContentCallback(callback);
+                    ad.show(activitySupplier.get(), callback);
+                } catch (Exception ex) {
+                    callback.fail(ex);
+                }
+            });
         } catch (Exception ex) {
             call.reject(ex.getLocalizedMessage(), ex);
         }

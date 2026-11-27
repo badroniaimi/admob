@@ -2,6 +2,7 @@ package com.getcapacitor.community.admob.interstitial
 
 import android.app.Activity
 import android.content.Context
+import android.os.SystemClock
 import com.getcapacitor.JSObject
 import com.getcapacitor.PluginCall
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -20,6 +21,7 @@ import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
+import org.mockito.MockedStatic
 import org.mockito.Mockito
 import org.mockito.Mockito.never
 import org.mockito.Mockito.spy
@@ -90,7 +92,7 @@ internal class InterstitialAdCallbackAndListenersTest {
                 // ACt
                 listener.onAdFailedToLoad(loadAdErrorMock)
 
-                Mockito.verify(pluginCall).reject(argumentCaptor.capture())
+                Mockito.verify(pluginCall).reject(argumentCaptor.capture(), ArgumentMatchers.eq(wantedErrorCode.toString()))
                 val resolvedError = argumentCaptor.value
                 assertEquals(wantedMessage, resolvedError)
             }
@@ -99,6 +101,9 @@ internal class InterstitialAdCallbackAndListenersTest {
 
         @Nested
         inner class AdLoaded {
+            @Mock
+            lateinit var systemClock: MockedStatic<SystemClock>
+
             @Mock
             lateinit var interstitialAdStub: InterstitialAdStub
 
@@ -136,14 +141,14 @@ internal class InterstitialAdCallbackAndListenersTest {
 
             @Test
             fun `onAdLoaded should store the ad on the static reference`() {
-                AdInterstitialExecutor.interstitialAd = null;
+                AdInterstitialExecutor.preparedAds.clear()
                 val argumentCaptor = ArgumentCaptor.forClass(JSObject::class.java)
                 val listener = InterstitialAdCallbackAndListeners.getInterstitialAdLoadCallback(pluginCall, notifierMock)
 
                 // ACt
                 listener.onAdLoaded(interstitialAdStub)
                 Mockito.verify(pluginCall).resolve(argumentCaptor.capture())
-                assertEquals(AdInterstitialExecutor.interstitialAd, interstitialAdStub);
+                assertEquals(AdInterstitialExecutor.preparedAds[interstitialAdStub.adUnitId], interstitialAdStub)
             }
 
             @Test

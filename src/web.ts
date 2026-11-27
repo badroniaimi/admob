@@ -7,12 +7,18 @@ import type {
   AdmobConsentInfo,
   AdmobConsentRequestOptions,
 } from '.';
+import type { AppOpenAdOptions } from './app-open/app-open-ad-options.interface';
+import type { AdMobBannerSize } from './banner';
 import { AdmobConsentStatus } from './consent/consent-status.enum';
+import { PrivacyOptionsRequirementStatus } from './consent/privacy-options-requirement-status.enum';
+import type { NativeAdDefinitions } from './native-ads/native-ad-definitions.interface';
+import type { NativeAdCommandIdentity, NativeAdFeedSession } from './native-ads/native-ad-options.interface';
+import type { NativeAdPlacementBatch } from './native-ads/native-ad-placement.interface';
 import type { AdMobRewardItem } from './reward';
-import type { AdOptions, AdLoadInfo } from './shared';
+import type { AdOptions, AdLoadInfo, AdShowOptions } from './shared';
 import type { TrackingAuthorizationStatusInterface } from './shared/tracking-authorization-status.interface';
 
-export class AdMobWeb extends WebPlugin implements AdMobPlugin {
+export class AdMobWeb extends WebPlugin implements AdMobPlugin, NativeAdDefinitions {
   async initialize(): Promise<void> {
     console.log('initialize');
   }
@@ -32,13 +38,21 @@ export class AdMobWeb extends WebPlugin implements AdMobPlugin {
     return {
       status: AdmobConsentStatus.REQUIRED,
       isConsentFormAvailable: true,
+      canRequestAds: true,
+      privacyOptionsRequirementStatus: PrivacyOptionsRequirementStatus.REQUIRED,
     };
+  }
+
+  async showPrivacyOptionsForm(): Promise<void> {
+    console.log('showPrivacyOptionsForm');
   }
 
   async showConsentForm(): Promise<AdmobConsentInfo> {
     console.log('showConsentForm');
     return {
       status: AdmobConsentStatus.REQUIRED,
+      canRequestAds: true,
+      privacyOptionsRequirementStatus: PrivacyOptionsRequirementStatus.REQUIRED,
     };
   }
 
@@ -54,23 +68,52 @@ export class AdMobWeb extends WebPlugin implements AdMobPlugin {
     console.log('setApplicationVolume', options);
   }
 
+  async getAdaptiveBannerSize(): Promise<AdMobBannerSize> {
+    throw this.unavailable('Adaptive banner sizes are only available on iOS and Android');
+  }
+
+  async getBannerSize(): Promise<AdMobBannerSize> {
+    return { width: 0, height: 0 };
+  }
+
+  async prepareBanner(options: AdOptions): Promise<void> {
+    console.log('prepareBanner', options);
+  }
+
   async showBanner(options: AdOptions): Promise<void> {
     console.log('showBanner', options);
   }
 
-  // Hide the banner, remove it from screen, but can show it later
   async hideBanner(): Promise<void> {
     console.log('hideBanner');
   }
 
-  // Resume the banner, show it after hide
   async resumeBanner(): Promise<void> {
     console.log('resumeBanner');
   }
 
-  // Destroy the banner, remove it from screen.
   async removeBanner(): Promise<void> {
     console.log('removeBanner');
+  }
+
+  async startNativeAdFeed(): Promise<void> {
+    throw new Error('Native ads are only available on iOS and Android');
+  }
+
+  async destroyNativeAdFeed(options: NativeAdFeedSession): Promise<void> {
+    console.log('destroyNativeAdFeed', options);
+  }
+
+  async loadNativeAd(): Promise<void> {
+    throw new Error('Native ads are only available on iOS and Android');
+  }
+
+  async updateNativeAdPlacements(options: NativeAdPlacementBatch): Promise<void> {
+    console.log('updateNativeAdPlacements', options);
+  }
+
+  async removeNativeAd(options: NativeAdCommandIdentity): Promise<void> {
+    console.log('removeNativeAd', options);
   }
 
   async prepareInterstitial(options: AdOptions): Promise<AdLoadInfo> {
@@ -80,18 +123,19 @@ export class AdMobWeb extends WebPlugin implements AdMobPlugin {
     };
   }
 
-  async showInterstitial(): Promise<void> {
-    console.log('showInterstitial');
+  async showInterstitial(options?: AdShowOptions): Promise<void> {
+    console.log('showInterstitial', options);
   }
 
   async prepareRewardVideoAd(options: AdOptions): Promise<AdLoadInfo> {
-    console.log(options);
+    console.log('prepareRewardVideoAd', options);
     return {
       adUnitId: options.adId,
     };
   }
 
-  async showRewardVideoAd(): Promise<AdMobRewardItem> {
+  async showRewardVideoAd(options?: AdShowOptions): Promise<AdMobRewardItem> {
+    console.log('showRewardVideoAd', options);
     return {
       type: '',
       amount: 0,
@@ -99,16 +143,41 @@ export class AdMobWeb extends WebPlugin implements AdMobPlugin {
   }
 
   async prepareRewardInterstitialAd(options: AdOptions): Promise<AdLoadInfo> {
-    console.log(options);
+    console.log('prepareRewardInterstitialAd', options);
     return {
       adUnitId: options.adId,
     };
   }
 
-  async showRewardInterstitialAd(): Promise<AdMobRewardItem> {
+  async showRewardInterstitialAd(options?: AdShowOptions): Promise<AdMobRewardItem> {
+    console.log('showRewardInterstitialAd', options);
     return {
       type: '',
       amount: 0,
     };
+  }
+
+  async loadAppOpen(options: AppOpenAdOptions): Promise<AdLoadInfo> {
+    console.log('loadAppOpen', options);
+    return {
+      adUnitId: options.adId,
+    };
+  }
+
+  async showAppOpen(options?: AdShowOptions): Promise<void> {
+    console.log('showAppOpen', options);
+  }
+
+  async isAppOpenLoaded(): Promise<{ value: boolean }> {
+    return { value: false };
+  }
+
+  override addListener(
+    eventName: string,
+    listenerFunc: (...args: any[]) => void,
+  ): Promise<{ remove: () => Promise<void> }> {
+    void listenerFunc;
+    console.log('addListener', eventName);
+    return Promise.resolve({ remove: () => Promise.resolve() });
   }
 }
